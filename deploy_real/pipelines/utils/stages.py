@@ -755,10 +755,7 @@ def _write_wuji_hand_redis(
     pipe.execute()
 
 
-def _apply_hand_payload_to_state(state: Any, hand_payload: Dict[str, Any], *, for_twist2: bool, for_sonic_zmq: bool) -> None:
-    if for_twist2:
-        state.cached_action_hand_left_7 = np.asarray(hand_payload["lh"], dtype=float).reshape(-1).tolist()
-        state.cached_action_hand_right_7 = np.asarray(hand_payload["rh"], dtype=float).reshape(-1).tolist()
+def _apply_hand_payload_to_state(state: Any, hand_payload: Dict[str, Any], *, for_sonic_zmq: bool) -> None:
     if for_sonic_zmq:
         state.context["zmq_left_hand_joints"] = hand_payload["lh"]
         state.context["zmq_right_hand_joints"] = hand_payload["rh"]
@@ -773,9 +770,7 @@ def _publish_twist2_from_payload(
     *,
     client: Any,
     cfg: Any,
-    state: Any,
     body_35: Any,
-    neck_2: Any,
     hand_payload: Dict[str, Any],
     now_ms: int,
 ) -> None:
@@ -783,9 +778,6 @@ def _publish_twist2_from_payload(
         redis_client=client,
         dry_run=bool(cfg.dry_run),
         body_35=list(body_35),
-        hand_left_7=list(state.cached_action_hand_left_7),
-        hand_right_7=list(state.cached_action_hand_right_7),
-        neck_2=list(neck_2),
         hand_tracking_left=dict(hand_payload["ht_l"]),
         hand_tracking_right=dict(hand_payload["ht_r"]),
         wuji_mode_left=str(hand_payload["mode_l"]),
@@ -910,7 +902,6 @@ def _stage_publish_hand_common(*, state: Any, cfg: Any, mode: str) -> str:
         _apply_hand_payload_to_state(
             state,
             hand_payload,
-            for_twist2=(mode == "twist2"),
             for_sonic_zmq=(mode == "sonic"),
         )
         if mode == "sonic" and bool(cfg.dry_run):
@@ -921,9 +912,7 @@ def _stage_publish_hand_common(*, state: Any, cfg: Any, mode: str) -> str:
             _publish_twist2_from_payload(
                 client=client,
                 cfg=cfg,
-                state=state,
                 body_35=body_35,
-                neck_2=neck_2,
                 hand_payload=hand_payload,
                 now_ms=now_ms,
             )

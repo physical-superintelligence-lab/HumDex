@@ -81,9 +81,6 @@ bash data_record.sh
 
 ##### 从 Redis 读取的动作数据
 - `action_body_unitree_g1_with_hands` → `action_body`
-- `action_hand_left_unitree_g1_with_hands` → `action_hand_left`
-- `action_hand_right_unitree_g1_with_hands` → `action_hand_right`
-- `action_neck_unitree_g1_with_hands` → `action_neck`
 - `t_action` → `t_action`（动作时间戳）
 
 #### 2.4 数据保存
@@ -128,9 +125,6 @@ bash data_record.sh
           "state_neck": [...],
           "t_state": 1234567890,
           "action_body": [...],
-          "action_hand_left": [...],
-          "action_hand_right": [...],
-          "action_neck": [...],
           "t_action": 1234567890
         },
         ...
@@ -148,9 +142,6 @@ bash data_record.sh
 
 ### 动作数据格式
 - `action_body`: 机器人身体动作（29 个关节的目标位置）
-- `action_hand_left`: 左手动作
-- `action_hand_right`: 右手动作
-- `action_neck`: 颈部动作
 
 ## 数据保存位置
 

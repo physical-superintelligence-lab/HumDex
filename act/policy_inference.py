@@ -2384,7 +2384,6 @@ def publish_initial_action_from_dataset(
     if float(ramp_seconds) > 0.0:
         if ramp_from == "redis_action":
             start_body = _read_redis_json_array(config.key_action_body, expected_len=35)
-            start_neck = _read_redis_json_array(config.key_action_neck, expected_len=2)
             if hand_20 is not None:
                 start_hand = _read_redis_json_array(
                     f"action_wuji_qpos_target_{hand_side}_{config.robot_key}",

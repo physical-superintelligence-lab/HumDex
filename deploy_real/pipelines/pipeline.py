@@ -53,9 +53,6 @@ class RuntimeState:
     safe_idle_body_35: List[float] = field(default_factory=lambda: [0.0] * 35)
     last_pub_body_35: List[float] = field(default_factory=lambda: [0.0] * 35)
     last_pub_neck_2: List[float] = field(default_factory=lambda: [0.0, 0.0])
-    cached_action_hand_left_7: List[float] = field(default_factory=lambda: [0.0] * 7)
-    cached_action_hand_right_7: List[float] = field(default_factory=lambda: [0.0] * 7)
-    cached_action_neck_2: List[float] = field(default_factory=lambda: [0.0, 0.0])
     last_hand_frame_time: float | None = None
     split_sources: bool = False
     context: Dict[str, object] = field(default_factory=dict)

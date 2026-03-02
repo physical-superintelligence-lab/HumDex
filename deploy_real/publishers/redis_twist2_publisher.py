@@ -9,9 +9,6 @@ def publish_twist2_step(
     redis_client: Any,
     dry_run: bool,
     body_35: list[float],
-    hand_left_7: list[float],
-    hand_right_7: list[float],
-    neck_2: list[float],
     hand_tracking_left: Dict[str, Any],
     hand_tracking_right: Dict[str, Any],
     wuji_mode_left: str,
@@ -22,9 +19,6 @@ def publish_twist2_step(
 ) -> None:
     robot_key = "unitree_g1_with_hands"
     key_action_body = f"action_body_{robot_key}"
-    key_action_hand_l = f"action_hand_left_{robot_key}"
-    key_action_hand_r = f"action_hand_right_{robot_key}"
-    key_action_neck = f"action_neck_{robot_key}"
     key_t_action = "t_action"
     key_ht_l = f"hand_tracking_left_{robot_key}"
     key_ht_r = f"hand_tracking_right_{robot_key}"
@@ -35,9 +29,6 @@ def publish_twist2_step(
 
     pipe = redis_client.pipeline()
     pipe.set(key_action_body, json.dumps(body_35))
-    pipe.set(key_action_hand_l, json.dumps(hand_left_7))
-    pipe.set(key_action_hand_r, json.dumps(hand_right_7))
-    pipe.set(key_action_neck, json.dumps(neck_2))
     pipe.set(key_ht_l, json.dumps(hand_tracking_left))
     pipe.set(key_ht_r, json.dumps(hand_tracking_right))
     if bvh_left is not None:

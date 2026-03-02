@@ -239,29 +239,18 @@ class RealTimePolicyController(object):
                 # execute the pipeline once here for setting the keys
                 self.redis_pipeline.execute()
 
-                # 5. 从 Redis 接收模仿观察
-                keys = ["action_body_unitree_g1_with_hands", "action_hand_left_unitree_g1_with_hands", "action_hand_right_unitree_g1_with_hands", "action_neck_unitree_g1_with_hands"]
+                # 5. 从 Redis 接收模仿观察（body only）
+                keys = ["action_body_unitree_g1_with_hands"]
                 for key in keys:
                     self.redis_pipeline.get(key)
                 redis_results = self.redis_pipeline.execute()
                 action_mimic = json.loads(redis_results[0])
-                action_hand_left = json.loads(redis_results[1])
-                action_hand_right = json.loads(redis_results[2])
-                action_neck = json.loads(redis_results[3])
                 
                 # Apply smoothing to body actions if enabled
                 if self.body_smoother is not None:
                     action_mimic = self.body_smoother.smooth(np.array(action_mimic, dtype=np.float32))
                     action_mimic = action_mimic.tolist()
             
-                
-                if self.use_hand:
-                    action_hand_left = np.array(action_hand_left, dtype=np.float32)
-                    action_hand_right = np.array(action_hand_right, dtype=np.float32)
-                else:
-                    action_hand_left = np.zeros(7, dtype=np.float32)
-                    action_hand_right = np.zeros(7, dtype=np.float32)
-
                 obs_full = np.concatenate([action_mimic, obs_proprio])
                 
                 obs_hist = np.array(self.proprio_history_buf).flatten()
@@ -323,9 +312,6 @@ class RealTimePolicyController(object):
                 kp_scale = 1.0
                 kd_scale = 1.0
                 self.env.send_robot_action(target_dof_pos, kp_scale, kd_scale)
-                
-                if self.use_hand:
-                    self.hand_ctrl.ctrl_dual_hand(action_hand_left, action_hand_right)
                 
                 elapsed = time.time() - t_start
                 if elapsed < self.control_dt:

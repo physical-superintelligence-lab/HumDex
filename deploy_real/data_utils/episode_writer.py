@@ -150,8 +150,6 @@ class EpisodeWriter():
 
         # body and hand action
         action_body = item_data.get('action_body', None)
-        action_hand_left = item_data.get('action_hand_left', None)
-        action_hand_right = item_data.get('action_hand_right', None)
 
         # human data
         human_data = item_data.get('human_data', None)
@@ -181,10 +179,6 @@ class EpisodeWriter():
 
         if action_body is not None:
             item_data['action_body'] = action_body
-        if action_hand_left is not None:
-            item_data['action_hand_left'] = action_hand_left
-        if action_hand_right is not None:
-            item_data['action_hand_right'] = action_hand_right
 
         if human_data is not None:
             item_data['human_data'] = human_data

@@ -63,7 +63,7 @@ vmc_invert_zw: false
 vmc_use_fk: true
 vmc_use_viewer_fk: true
 vmc_fk_skeleton: "bvh"
-vmc_bvh_path: "/home/hongyijing/heng/TWIST2_github/session251008_1501_align_mocap.bvh"
+vmc_bvh_path: "assets/slimevr/bvh-recording.bvh"
 vmc_bvh_scale: 0.01
 vmc_viewer_bone_axis_override: "Hips:flip=yz;Spine:flip=yz;Spine1:flip=yz;Neck:flip=yz;Head:flip=yz;LeftUpperArm:flip=x;RightUpperArm:flip=x;LeftLowerArm:flip=x;RightLowerArm:flip=x;LeftHand:flip=x;RightHand:flip=x;LeftUpperLeg:flip=x;RightUpperLeg:flip=x;LeftLowerLeg:flip=x;RightLowerLeg:flip=x;LeftFoot:flip=x;RightFoot:flip=x"
 print_every: 120

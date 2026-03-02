@@ -194,8 +194,6 @@ def main(args, xml_file, robot_base):
                     # Keep sending default pose while waiting for start signal
                     idle_mimic_obs = start_frame_mimic_obs if args.send_start_frame_as_end_frame and start_frame_mimic_obs is not None else DEFAULT_MIMIC_OBS[args.robot]
                     redis_client.set(f"action_body_{args.robot}", json.dumps(idle_mimic_obs.tolist()))
-                    redis_client.set(f"action_hand_left_{args.robot}", json.dumps(np.zeros(7).tolist()))
-                    redis_client.set(f"action_hand_right_{args.robot}", json.dumps(np.zeros(7).tolist()))
 
                     # Sleep and continue to next iteration
                     elapsed = time.time() - t0
@@ -215,9 +213,6 @@ def main(args, xml_file, robot_base):
             # Convert to JSON (list) to put into Redis
             mimic_obs_list = mimic_obs.tolist() if mimic_obs.ndim == 1 else mimic_obs.flatten().tolist()
             redis_client.set(f"action_body_{args.robot}", json.dumps(mimic_obs_list))
-            redis_client.set(f"action_hand_left_{args.robot}", json.dumps(np.zeros(7).tolist()))
-            redis_client.set(f"action_hand_right_{args.robot}", json.dumps(np.zeros(7).tolist()))
-            redis_client.set(f"action_neck_{args.robot}", json.dumps(np.zeros(2).tolist()))
             last_mimic_obs = mimic_obs
             
             # Print or log it
@@ -255,15 +250,8 @@ def main(args, xml_file, robot_base):
         for i in range(int(time_back_to_default / control_dt)):
             interp_mimic_obs = last_mimic_obs + (target_mimic_obs - last_mimic_obs) * (i / (time_back_to_default / control_dt))
             redis_client.set(f"action_body_{args.robot}", json.dumps(interp_mimic_obs.tolist()))
-            # also reset hands and neck to safe zeros to avoid None in low-level controller
-            redis_client.set(f"action_hand_left_{args.robot}", json.dumps(np.zeros(7).tolist()))
-            redis_client.set(f"action_hand_right_{args.robot}", json.dumps(np.zeros(7).tolist()))
-            redis_client.set(f"action_neck_{args.robot}", json.dumps(np.zeros(2).tolist()))
             time.sleep(control_dt)
         redis_client.set(f"action_body_{args.robot}", json.dumps(target_mimic_obs.tolist()))
-        redis_client.set(f"action_hand_left_{args.robot}", json.dumps(np.zeros(7).tolist()))
-        redis_client.set(f"action_hand_right_{args.robot}", json.dumps(np.zeros(7).tolist()))
-        redis_client.set(f"action_neck_{args.robot}", json.dumps(np.zeros(2).tolist()))
         last_mimic_obs = target_mimic_obs
         viewer.close()
         time.sleep(0.5)
@@ -276,15 +264,8 @@ def main(args, xml_file, robot_base):
         for i in range(int(time_back_to_default / control_dt)):
             interp_mimic_obs = last_mimic_obs + (target_mimic_obs - last_mimic_obs) * (i / (time_back_to_default / control_dt))
             redis_client.set(f"action_body_{args.robot}", json.dumps(interp_mimic_obs.tolist()))
-            # also reset hands and neck to safe zeros to avoid None in low-level controller
-            redis_client.set(f"action_hand_left_{args.robot}", json.dumps(np.zeros(7).tolist()))
-            redis_client.set(f"action_hand_right_{args.robot}", json.dumps(np.zeros(7).tolist()))
-            redis_client.set(f"action_neck_{args.robot}", json.dumps(np.zeros(2).tolist()))
             time.sleep(control_dt)
         redis_client.set(f"action_body_{args.robot}", json.dumps(target_mimic_obs.tolist()))
-        redis_client.set(f"action_hand_left_{args.robot}", json.dumps(np.zeros(7).tolist()))
-        redis_client.set(f"action_hand_right_{args.robot}", json.dumps(np.zeros(7).tolist()))
-        redis_client.set(f"action_neck_{args.robot}", json.dumps(np.zeros(2).tolist()))
         last_mimic_obs = target_mimic_obs
         viewer.close()
         time.sleep(0.5)

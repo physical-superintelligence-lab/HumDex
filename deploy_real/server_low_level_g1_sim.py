@@ -267,15 +267,12 @@ class RealTimePolicyController:
                     self.redis_pipeline.set("t_state", int(time.time() * 1000)) # current timestamp in ms
                     self.redis_pipeline.execute()
 
-                    # Get mimic obs from Redis
-                    keys = ["action_body_unitree_g1_with_hands", "action_hand_left_unitree_g1_with_hands", "action_hand_right_unitree_g1_with_hands", "action_neck_unitree_g1_with_hands"]
+                    # Get mimic obs from Redis (body only)
+                    keys = ["action_body_unitree_g1_with_hands"]
                     for key in keys:
                         self.redis_pipeline.get(key)
                     redis_results = self.redis_pipeline.execute()
                     action_mimic = json.loads(redis_results[0])
-                    action_left_hand = json.loads(redis_results[1])
-                    action_right_hand = json.loads(redis_results[2])
-                    action_neck = json.loads(redis_results[3])
 
                     # Construct observation for TWIST2 controller
                     obs_full = np.concatenate([action_mimic, obs_proprio])
