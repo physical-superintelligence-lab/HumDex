@@ -53,8 +53,8 @@ if __name__ == "__main__":
     # Basic usage
     speaker.speak("Get into teleop mode!")
     
-    # Chinese text will be attempted to be read in English
-    speaker.speak("你好")
+    # Non-English text example
+    speaker.speak("hello")
     
     # Adjust speed
     speaker.adjust_speed(120)  # Slower

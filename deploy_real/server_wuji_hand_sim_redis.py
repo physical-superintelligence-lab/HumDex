@@ -2,16 +2,17 @@
 """
 Wuji Hand SIM Visualization via Redis
 
-目标：
-- 从 Redis 读取 xdmocap_teleop_body_to_redis.py 写入的 hand_tracking_*（26D dict）
-- 按 deploy_real/server_wuji_hand_redis.py 的后处理方式：
+Goals:
+- Read hand_tracking_* (26D dict) from Redis.
+- Follow the same post-processing path as deploy_real/server_wuji_hand_redis.py:
   26D -> 21D MediaPipe -> apply_mediapipe_transformations -> Retargeter(from YAML)
-- 将 retarget 输出映射到 MuJoCo 手模型（wuji_retargeting/example/utils/mujoco-sim/model/{left,right}.xml）
-  并在 viewer 中实时可视化
+- Map retarget output to MuJoCo hand model
+  (wuji_retargeting/example/utils/mujoco-sim/model/{left,right}.xml)
+  and visualize in real time.
 
-说明：
-- 本脚本只做 sim 可视化，不依赖/不控制真实 wujihandpy 硬件
-- 同时支持 follow/hold/default 三种模式（读取 wuji_hand_mode_*）
+Notes:
+- Simulation visualization only; no real wujihandpy hardware control.
+- Supports follow/hold/default modes via wuji_hand_mode_*.
 """
 
 from __future__ import annotations
@@ -31,11 +32,11 @@ try:
     import redis  # type: ignore
 except Exception as e:
     raise SystemExit(
-        "❌ 缺少依赖 `redis`（python-redis）。\n"
-        "   解决：在你的运行环境里安装，例如：\n"
+        "[ERROR] Missing dependency `redis` (python-redis).\n"
+        "   Install it in your runtime environment, for example:\n"
         "     - pip install redis\n"
-        "     - 或 conda install -c conda-forge redis-py\n"
-        f"   原始错误：{e}"
+        "     - or conda install -c conda-forge redis-py\n"
+        f"   Original error: {e}"
     )
 
 
@@ -43,7 +44,7 @@ def now_ms() -> int:
     return int(time.time() * 1000)
 
 
-# 26维手部关节名称（与 deploy_real/server_wuji_hand_redis.py 一致）
+# 26D hand joint names (aligned with deploy_real/server_wuji_hand_redis.py).
 HAND_JOINT_NAMES_26 = [
     "Wrist",
     "Palm",
@@ -74,7 +75,7 @@ HAND_JOINT_NAMES_26 = [
 ]
 
 
-# # 26D -> 21D MediaPipe mapping（与 deploy_real/server_wuji_hand_redis.py 一致）
+# # 26D -> 21D MediaPipe mapping (aligned with deploy_real/server_wuji_hand_redis.py)
 # MEDIAPIPE_MAPPING_26_TO_21 = [
 #     1,  # 0: Wrist -> Wrist
 #     2,  # 1: ThumbMetacarpal -> Thumb CMC
@@ -108,29 +109,30 @@ MEDIAPIPE_MAPPING_26_TO_21 = [
     7,   # 5: IndexMetacarpal -> Index MCP
     8,   # 6: IndexProximal -> Index PIP
     9,   # 7: IndexIntermediate -> Index DIP
-    10,  # 8: IndexTip -> Index Tip (跳过 IndexDistal)
+    10,  # 8: IndexTip -> Index Tip (skip IndexDistal)
     12,  # 9: MiddleMetacarpal -> Middle MCP
     13,  # 10: MiddleProximal -> Middle PIP
     14,  # 11: MiddleIntermediate -> Middle DIP
-    15,  # 12: MiddleTip -> Middle Tip (跳过 MiddleDistal)
+    15,  # 12: MiddleTip -> Middle Tip (skip MiddleDistal)
     17,  # 13: RingMetacarpal -> Ring MCP
     18,  # 14: RingProximal -> Ring PIP
     19,  # 15: RingIntermediate -> Ring DIP
-    20,  # 16: RingTip -> Ring Tip (跳过 RingDistal)
+    20,  # 16: RingTip -> Ring Tip (skip RingDistal)
     22,  # 17: LittleMetacarpal -> Pinky MCP
     23,  # 18: LittleProximal -> Pinky PIP
     24,  # 19: LittleIntermediate -> Pinky DIP
-    25,  # 20: LittleTip -> Pinky Tip (跳过 LittleDistal)
+    25,  # 20: LittleTip -> Pinky Tip (skip LittleDistal)
 ]
 
 
 
 def hand_26d_to_mediapipe_21d(hand_data_dict: Dict[str, Any], hand_side: str, print_distances: bool = False) -> np.ndarray:
     """
-    将 26D dict（key: LeftHandWrist/RightHandWrist...）转换为 (21,3) MediaPipe 关键点。
-    与 deploy_real/server_wuji_hand_redis.py 的逻辑保持一致：
-    - 取 position
-    - wrist 作为原点（整体减 wrist）
+    Convert a 26D dict (keys: LeftHandWrist/RightHandWrist...) to
+    (21,3) MediaPipe keypoints.
+    Logic matches deploy_real/server_wuji_hand_redis.py:
+    - Use position values
+    - Use wrist as origin (subtract wrist from all points)
     """
     side = hand_side.strip().lower()
     assert side in ["left", "right"]
@@ -149,13 +151,13 @@ def hand_26d_to_mediapipe_21d(hand_data_dict: Dict[str, Any], hand_side: str, pr
     wrist_pos = mp21[0].copy()
     mp21 = mp21 - wrist_pos
 
-    # 计算并打印手腕到各指尖的距离（仅在需要时打印，避免实时环刷屏）
+    # Compute and print wrist-to-fingertip distances on demand.
     if bool(print_distances):
-        print("大拇指位置: ", mp21[4])
-        print("食指位置: ", mp21[8])
-        print("中指位置: ", mp21[12])
-        print("无名指位置: ", mp21[16])
-        print("小拇指位置: ", mp21[20])
+        print("Thumb position:", mp21[4])
+        print("Index position:", mp21[8])
+        print("Middle position:", mp21[12])
+        print("Ring position:", mp21[16])
+        print("Pinky position:", mp21[20])
 
         fingertip_indices = {
             "Thumb": 4,    # ThumbTip
@@ -164,21 +166,21 @@ def hand_26d_to_mediapipe_21d(hand_data_dict: Dict[str, Any], hand_side: str, pr
             "Ring": 16,    # RingTip
             "Pinky": 20,   # PinkyTip
         }
-        print("\n📏 手腕到各指尖的距离 (单位: 米):")
+        print("\nWrist-to-fingertip distance (meters):")
         print("-" * 50)
         wrist0 = mp21[0]  # should be [0,0,0]
         for finger_name, tip_idx in fingertip_indices.items():
             tip_pos = mp21[int(tip_idx)]
             distance = float(np.linalg.norm(tip_pos - wrist0))
-            print(f"  {finger_name:6s} (索引 {int(tip_idx):2d}): {distance*100:6.2f} cm ({distance:.4f} m)")
+            print(f"  {finger_name:6s} (index {int(tip_idx):2d}): {distance*100:6.2f} cm ({distance:.4f} m)")
         print("-" * 50)
     return mp21
 
 
 def _build_wuji_reorder_idx(retargeter: Any) -> Optional[np.ndarray]:
     """
-    retarget qpos 的顺序不一定是 finger{i}_joint{j} 的自然顺序；
-    这里参考 deploy_real/server_wuji_hand_redis.py：按 joint name 重排到：
+    Retarget qpos order is not always finger{i}_joint{j} natural order.
+    Reorder by joint name to:
       finger1_joint1..4, finger2_joint1..4, ... finger5_joint1..4
     """
     try:
@@ -269,10 +271,10 @@ class WujiHandSimRedisViz:
             from wuji_retargeting.mediapipe import apply_mediapipe_transformations  # type: ignore
         except Exception as e:
             raise RuntimeError(
-                "无法导入新版 wuji-retargeting（Retargeter）。\n"
-                "解决：在运行环境中安装新版包，例如：\n"
+                "Cannot import modern wuji-retargeting (Retargeter).\n"
+                "Install it in your runtime environment, for example:\n"
                 "  pip install -e ./wuji-retargeting\n"
-                f"原始错误：{repr(e)}"
+                f"Original error: {repr(e)}"
             ) from e
 
         self._apply_mediapipe_transformations = apply_mediapipe_transformations
@@ -288,26 +290,26 @@ class WujiHandSimRedisViz:
                     sys.path.insert(0, str(wuji_retarget_path))
                 import geort  # type: ignore
             except Exception as e:
-                raise RuntimeError(f"无法导入 geort（需要 wuji_retarget/ 在 PYTHONPATH）。错误：{e}") from e
+                raise RuntimeError(f"Cannot import geort (wuji_retarget/ must be on PYTHONPATH). Error: {e}") from e
 
-            print(f"[WujiHandSim] 🔄 load GeoRT model: tag={self.policy_tag}, epoch={self.policy_epoch}")
+            print(f"[WujiHandSim] [INFO] load GeoRT model: tag={self.policy_tag}, epoch={self.policy_epoch}")
             self.model_infer = geort.load_model(self.policy_tag, epoch=self.policy_epoch)
             try:
                 self.model_infer.eval()
             except Exception:
                 pass
-            print("[WujiHandSim] ✅ GeoRT model loaded")
+            print("[WujiHandSim] [OK] GeoRT model loaded")
         else:
             if not self.config_path:
-                raise ValueError("未提供 --config，无法初始化新版 Retargeter")
+                raise ValueError("Missing --config, cannot initialize modern Retargeter")
             cfg = Path(self.config_path).expanduser().resolve()
             if not cfg.exists():
-                raise FileNotFoundError(f"YAML 配置文件不存在: {cfg}")
-            print(f"[WujiHandSim] 🔄 init Retargeter({self.hand_side}) with config: {cfg}")
+                raise FileNotFoundError(f"YAML config file not found: {cfg}")
+            print(f"[WujiHandSim] [INFO] init Retargeter({self.hand_side}) with config: {cfg}")
             self.retargeter = Retargeter.from_yaml(str(cfg), hand_side=self.hand_side)
             self._wuji_reorder_idx = _build_wuji_reorder_idx(self.retargeter)
             if self._wuji_reorder_idx is None:
-                print("[WujiHandSim] ⚠️ 未能通过 joint name 推断重排索引，将回退为 reshape(5,4)")
+                print("[WujiHandSim] [WARN] Failed to infer reorder indices from joint names; fallback to reshape(5,4)")
             # Optional: disable DexPilot pinch projection (same intent as server_wuji_hand_redis.py)
             try:
                 if self.disable_dexpilot_projection:
@@ -318,7 +320,7 @@ class WujiHandSimRedisViz:
                             opt.project_dist = 0.0
                         if hasattr(opt, "escape_dist"):
                             opt.escape_dist = 0.0
-                    print("[WujiHandSim] ✅ DexPilot projection disabled (project_dist/escape_dist=0)")
+                    print("[WujiHandSim] [OK] DexPilot projection disabled (project_dist/escape_dist=0)")
             except Exception:
                 pass
 
@@ -327,7 +329,7 @@ class WujiHandSimRedisViz:
             import mujoco  # type: ignore
             import mujoco.viewer  # type: ignore
         except Exception as e:
-            raise RuntimeError(f"未安装 mujoco 或 GUI 依赖异常：{e}") from e
+            raise RuntimeError(f"mujoco is not installed or GUI dependencies are missing: {e}") from e
 
         self._mujoco = mujoco
         self._mjviewer = mujoco.viewer
@@ -369,9 +371,9 @@ class WujiHandSimRedisViz:
 
     def _read_tracking26(self) -> Tuple[bool, Optional[Dict[str, Any]]]:
         """
-        返回 (ok, dict)：
-        - ok=True 且 dict != None: 数据新鲜且 is_active=True
-        - ok=False: 无数据/过期/不 active
+        Return (ok, dict):
+        - ok=True and dict != None: data is fresh and is_active=True
+        - ok=False: missing/stale/inactive data
         """
         try:
             raw = self.redis_client.get(self.redis_key_hand_tracking)
@@ -479,7 +481,7 @@ class WujiHandSimRedisViz:
                                 if self.print_distances_and_exit:
                                     # Print once then exit (same intent as server_wuji_hand_redis.py)
                                     _ = hand_26d_to_mediapipe_21d(hand_dict, self.hand_side, print_distances=True)
-                                    print("\n✅ 距离信息已打印，程序退出")
+                                    print("\n[OK] Distance info printed. Exiting.")
                                     self.running = False
                                     break
                                 q = self._retarget_to_wuji20(hand_dict).astype(np.float32)
@@ -489,7 +491,7 @@ class WujiHandSimRedisViz:
                                 self._publish_action_target(self.last_qpos)
                             except Exception as e:
                                 if self.verbose:
-                                    print(f"[WujiHandSim] ⚠️ retarget failed: {e}")
+                                    print(f"[WujiHandSim] [WARN] retarget failed: {e}")
 
                     flat = self.last_qpos.reshape(-1)
                     n = min(int(self.model.nu), int(flat.shape[0]))
@@ -512,7 +514,7 @@ class WujiHandSimRedisViz:
                         time.sleep(sleep_s)
 
         except Exception as e:
-            print(f"[WujiHandSim] ❌ viewer 启动失败（可能无 GUI / DISPLAY 未设置）：{e}")
+            print(f"[WujiHandSim] [ERROR] Failed to start viewer (possibly no GUI or DISPLAY unset): {e}")
             return 2
 
         return 0
@@ -522,36 +524,36 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Wuji hand MuJoCo sim visualization (Redis -> Retarget -> MuJoCo)")
     p.add_argument("--hand_side", type=str, default="left", choices=["left", "right"], help="left/right")
     p.add_argument("--redis_ip", type=str, default="localhost", help="Redis host")
-    p.add_argument("--target_fps", type=float, default=60.0, help="控制/渲染更新频率（Hz）")
-    p.add_argument("--freshness_ms", type=int, default=500, help="hand_tracking 数据新鲜度阈值（毫秒）")
-    p.add_argument("--mjcf_path", type=str, default="", help="可选：手模型 xml 路径（默认使用 wuji_retargeting/example/utils/mujoco-sim/model/{side}.xml）")
+    p.add_argument("--target_fps", type=float, default=60.0, help="Control/render update rate (Hz)")
+    p.add_argument("--freshness_ms", type=int, default=500, help="Freshness threshold for hand_tracking data (ms)")
+    p.add_argument("--mjcf_path", type=str, default="", help="Optional hand model XML path (default: wuji_retargeting/example/utils/mujoco-sim/model/{side}.xml)")
     p.add_argument(
         "--config",
         type=str,
         default="",
-        help="Retarget YAML 配置路径。为空时按手侧使用默认：wuji-retargeting/example/config/retarget_manus_<hand>.yaml",
+        help="Retarget YAML config path. If empty, use default by hand side: wuji-retargeting/example/config/retarget_manus_<hand>.yaml",
     )
-    p.add_argument("--no_write_action_target", action="store_true", help="不写 action_wuji_qpos_target_* 回 Redis（默认会写，便于排障/录制）")
-    p.add_argument("--verbose", action="store_true", help="打印更多日志")
+    p.add_argument("--no_write_action_target", action="store_true", help="Do not write action_wuji_qpos_target_* back to Redis")
+    p.add_argument("--verbose", action="store_true", help="Print verbose logs")
     p.add_argument(
         "--print_distances_and_exit",
         action="store_true",
-        help="打印一次 wrist->指尖距离（在 26D->21D 后、变换前），然后退出程序。",
+        help="Print wrist->fingertip distances once (after 26D->21D and before transforms), then exit.",
     )
     p.add_argument(
         "--disable_dexpilot_projection",
         action="store_true",
-        help="禁用 DexPilot 的 pinch 投影机制（project_dist/escape_dist 设为 0；仅 DexPilot 模式有效）",
+        help="Disable DexPilot pinch projection (set project_dist/escape_dist to 0; DexPilot mode only)",
     )
     # mode switch (align with deploy2.py / wuji_hand_model_deploy.sh)
-    p.add_argument("--use_model", action="store_true", help="使用 GeoRT 模型推理（默认不启用，使用 DexPilot retarget）")
-    p.add_argument("--policy_tag", type=str, default="geort_filter_wuji", help="GeoRT 模型 tag（--use_model）")
-    p.add_argument("--policy_epoch", type=int, default=-1, help="GeoRT 模型 epoch（--use_model）")
-    p.add_argument("--use_fingertips5", action="store_true", help="model 输入用 5 指尖（默认启用）")
+    p.add_argument("--use_model", action="store_true", help="Use GeoRT model inference (default off; DexPilot retarget otherwise)")
+    p.add_argument("--policy_tag", type=str, default="geort_filter_wuji", help="GeoRT model tag (--use_model)")
+    p.add_argument("--policy_epoch", type=int, default=-1, help="GeoRT model epoch (--use_model)")
+    p.add_argument("--use_fingertips5", action="store_true", help="Use 5 fingertips as model input (default enabled)")
     p.set_defaults(use_fingertips5=True)
-    p.add_argument("--clamp_min", type=float, default=-1.5, help="model 输出限幅最小值")
-    p.add_argument("--clamp_max", type=float, default=1.5, help="model 输出限幅最大值")
-    p.add_argument("--max_delta_per_step", type=float, default=0.08, help="model 输出每步最大变化")
+    p.add_argument("--clamp_min", type=float, default=-1.5, help="Minimum clamp value for model output")
+    p.add_argument("--clamp_max", type=float, default=1.5, help="Maximum clamp value for model output")
+    p.add_argument("--max_delta_per_step", type=float, default=0.08, help="Maximum per-step delta for model output")
     return p.parse_args()
 
 

@@ -56,12 +56,12 @@ def save_video(frames: List[np.ndarray], path: str, fps: int = 30) -> bool:
         True if successful, False otherwise
     """
     if not HAS_IMAGEIO:
-        print("⚠️ Cannot save video: imageio not installed")
+        print("[WARN] Cannot save video: imageio not installed")
         print("   Install with: pip install imageio imageio-ffmpeg")
         return False
     
     if not frames:
-        print("⚠️ Cannot save video: empty frames")
+        print("[WARN] Cannot save video: empty frames")
         return False
     try:
         # imageio/ffmpeg expects fixed-size frames; validate upfront to avoid hard crashes.
@@ -75,10 +75,10 @@ def save_video(frames: List[np.ndarray], path: str, fps: int = 30) -> bool:
             if a.dtype != np.uint8:
                 raise ValueError(f"Frame[{idx}] dtype {a.dtype} is not uint8")
         imageio.mimsave(path, frames, fps=fps)
-        print(f"✅ Video saved: {path} ({len(frames)} frames @ {fps} FPS)")
+        print(f"[OK] Video saved: {path} ({len(frames)} frames @ {fps} FPS)")
         return True
     except Exception as e:
-        print(f"⚠️ Video save failed: {path}: {e}")
+        print(f"[WARN] Video save failed: {path}: {e}")
         return False
 
 
@@ -93,7 +93,7 @@ def save_frame(frame: np.ndarray, path: str) -> bool:
         True if successful, False otherwise
     """
     if not HAS_IMAGEIO:
-        print("⚠️ Cannot save image: imageio not installed")
+        print("[WARN] Cannot save image: imageio not installed")
         return False
     
     imageio.imwrite(path, frame)
@@ -151,7 +151,7 @@ def load_onnx_policy(policy_path: str, device: str = 'cpu') -> OnnxPolicyWrapper
     
     session = ort.InferenceSession(policy_path, providers=providers)
     input_name = session.get_inputs()[0].name
-    print(f"✅ ONNX policy loaded: {session.get_providers()}")
+    print(f"[OK] ONNX policy loaded: {session.get_providers()}")
     return OnnxPolicyWrapper(session, input_name)
 
 
@@ -387,7 +387,7 @@ class HumanoidVisualizer:
             for i in range(warmup_steps):
                 self.step(first_action)
             if verbose:
-                print("✅ Robot stabilized")
+                print("[OK] Robot stabilized")
 
         # Main visualization loop
         frames = []
@@ -402,7 +402,7 @@ class HumanoidVisualizer:
             save_video(frames, output_video, fps=fps)
 
         if verbose:
-            print("✅ Visualization complete!")
+            print("[OK] Visualization complete!")
 
         return frames
 
@@ -575,7 +575,7 @@ class HandVisualizer:
             save_video(frames, output_video, fps=fps)
 
         if verbose:
-            print("✅ Hand visualization complete!")
+            print("[OK] Hand visualization complete!")
 
         return frames
 

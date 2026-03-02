@@ -215,7 +215,7 @@ class RealTimePolicyController(object):
 
                 obs_proprio = np.concatenate([
                     ang_vel * self.ang_vel_scale,
-                    rpy[:2], # 只使用 roll 和 pitch
+                    rpy[:2],  # Use only roll and pitch.
                     (dof_pos - self.default_dof_pos) * self.dof_pos_scale,
                     obs_dof_vel * self.dof_vel_scale,
                     self.last_action
@@ -239,7 +239,7 @@ class RealTimePolicyController(object):
                 # execute the pipeline once here for setting the keys
                 self.redis_pipeline.execute()
 
-                # 5. 从 Redis 接收模仿观察（body only）
+                # 5. Read mimic observation from Redis (body only).
                 keys = ["action_body_unitree_g1_with_hands"]
                 for key in keys:
                     self.redis_pipeline.get(key)
@@ -302,7 +302,7 @@ class RealTimePolicyController(object):
                             self._delta_clip_counter += 1
                             if (self._delta_clip_counter % self.max_dof_delta_print_every) == 0:
                                 print(
-                                    f"[safety] rate-limit({self.safety_rate_limit_scope}) applied: max|Δq|={max_abs:.3f}rad "
+                                    f"[safety] rate-limit({self.safety_rate_limit_scope}) applied: max|q|={max_abs:.3f}rad "
                                     f"> {self.max_dof_delta_per_step:.3f}rad, alpha={alpha:.3f} "
                                     f"(count={self._delta_clip_counter})"
                                 )
@@ -383,7 +383,7 @@ def main():
     args = parser.parse_args()
 
     
-    # 验证文件存在
+    # Validate required file paths.
     if not os.path.exists(args.policy):
         print(f"Error: Policy file {args.policy} does not exist")
         return
@@ -404,7 +404,7 @@ def main():
     print(f"  Safety rate limit scope: {args.safety_rate_limit_scope}")
     print(f"  Max dof delta/step: {args.max_dof_delta_per_step}")
     
-    # 安全提示
+    # Safety notice.
     print("\n" + "="*50)
     print("SAFETY WARNING:")
     print("You are about to run a policy on a real robot.")

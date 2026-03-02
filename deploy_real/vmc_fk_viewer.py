@@ -2,8 +2,8 @@
 """
 VMC Forward Kinematics Viewer
 -----------------------------
-不依赖 SlimeVR 的 VRM/骨骼长度，完全在代码中定义标准骨架。
-利用 SlimeVR 发送的【旋转数据】 + 【预设骨骼长度】 = 【完整动作】
+Use a built-in standard skeleton instead of SlimeVR VRM/bone length metadata.
+Combine SlimeVR rotations with predefined bone lengths to reconstruct full-body motion.
 """
 import argparse
 import math
@@ -14,23 +14,23 @@ import os
 from pythonosc import dispatcher, osc_server
 
 # ==========================================
-# 1. 定义标准骨架 (单位: 米)
-# 这是一个通用的人体 T-Pose 结构
+# 1. Define the standard skeleton (unit: meters).
+# This is a generic human T-pose structure.
 # ==========================================
-# 格式: { "骨骼名": (父骨骼, (X偏移, Y偏移, Z偏移)) }
-# 偏移量是指：当父骨骼旋转为 0 时，子骨骼相对于父骨骼的位置
+# Format: { "bone_name": (parent_bone, (x_offset, y_offset, z_offset)) }
+# Offset means child position relative to parent when parent rotation is identity.
 STD_SKELETON = {
-    "Hips":           (None,            (0.0, 0.0, 0.0)), # 根节点
+    "Hips":           (None,            (0.0, 0.0, 0.0)),  # Root node
     
-    # 脊柱向上
+    # Spine chain upward
     "Spine":          ("Hips",          (0.0,  0.10, 0.0)),
     "Chest":          ("Spine",         (0.0,  0.15, 0.0)),
     "UpperChest":     ("Chest",         (0.0,  0.15, 0.0)),
     "Neck":           ("UpperChest",    (0.0,  0.15, 0.0)),
     "Head":           ("Neck",          (0.0,  0.10, 0.0)),
 
-    # 腿部 (从 Hips 下延)
-    "LeftUpperLeg":   ("Hips",          (-0.08, -0.05, 0.0)), # 稍微偏左下
+    # Legs (downward from Hips)
+    "LeftUpperLeg":   ("Hips",          (-0.08, -0.05, 0.0)),  # Slight left/down offset
     "LeftLowerLeg":   ("LeftUpperLeg",  (0.0,  -0.42, 0.0)),
     "LeftFoot":       ("LeftLowerLeg",  (0.0,  -0.40, 0.0)),
     
@@ -38,9 +38,9 @@ STD_SKELETON = {
     "RightLowerLeg":  ("RightUpperLeg", (0.0,  -0.42, 0.0)),
     "RightFoot":      ("RightLowerLeg", (0.0,  -0.40, 0.0)),
 
-    # 手臂 (从 UpperChest 向两侧)
+    # Arms (extend from UpperChest to both sides)
     "LeftShoulder":   ("UpperChest",    (-0.10, 0.10, 0.0)),
-    "LeftUpperArm":   ("LeftShoulder",  (-0.12, 0.0,  0.0)), # T-Pose 向左
+    "LeftUpperArm":   ("LeftShoulder",  (-0.12, 0.0,  0.0)),  # Left in T-pose
     "LeftLowerArm":   ("LeftUpperArm",  (-0.28, 0.0,  0.0)),
     "LeftHand":       ("LeftLowerArm",  (-0.25, 0.0,  0.0)),
 
@@ -50,10 +50,10 @@ STD_SKELETON = {
     "RightHand":      ("RightLowerArm", (0.25, 0.0,  0.0)),
 }
 
-# 标准骨架备份：用于 BVH 轴对齐
+# Backup of standard skeleton for BVH axis alignment.
 STD_SKELETON_BASE = dict(STD_SKELETON)
 
-# 简单的连线用于画图
+# Line segments used for visualization.
 DRAW_LINES = [
     ("Hips", "Spine"), ("Spine", "Chest"), ("Chest", "UpperChest"),
     ("UpperChest", "Neck"), ("Neck", "Head"),
@@ -63,7 +63,7 @@ DRAW_LINES = [
     ("Hips", "RightUpperLeg"), ("RightUpperLeg", "RightLowerLeg"), ("RightLowerLeg", "RightFoot")
 ]
 
-# 四元数旋转辅助函数
+# Quaternion rotation helpers.
 def q_mult(q1, q2):
     x1, y1, z1, w1 = q1
     x2, y2, z2, w2 = q2
@@ -74,7 +74,7 @@ def q_mult(q1, q2):
     return np.array([x, y, z, w])
 
 def q_rot_vec(q, v):
-    # 用四元数 q 旋转向量 v
+    # Rotate vector v by quaternion q.
     x, y, z = v
     qv = np.array([x, y, z, 0.0])
     q_conj = np.array([-q[0], -q[1], -q[2], q[3]])
@@ -238,9 +238,9 @@ class VMCFKReceiver:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
-        self.raw_rots = {} # 存纯旋转 {name: [x,y,z,w]}
-        self.computed_pos = {} # 存计算出的绝对坐标
-        self.computed_rot = {} # 存计算出的绝对旋转矩阵
+        self.raw_rots = {}  # Raw local rotations: {name: [x, y, z, w]}
+        self.computed_pos = {}  # Computed global positions
+        self.computed_rot = {}  # Computed global rotation matrices
         self._lock = threading.Lock()
         self.name_map = {}
         self.axis_cfg = {"swap": "", "mirror_x": False, "mirror_y": False, "mirror_z": False}
@@ -260,7 +260,7 @@ class VMCFKReceiver:
         self.recv_count = 0
         self.last_recv_ts = 0.0
         
-        # 初始化所有骨骼旋转为 Identity
+        # Initialize all bone rotations to identity.
         for bone in STD_SKELETON:
             self.raw_rots[bone] = np.array([0.0, 0.0, 0.0, 1.0])
             self.name_map[_normalize_name(bone)] = bone
@@ -280,20 +280,20 @@ class VMCFKReceiver:
         if key not in self.name_map:
             return
         canon_name = self.name_map[key]
-        # 我们只取旋转 (4,5,6,7)
+        # VMC packet fields (4,5,6,7) contain quaternion rotation.
         rot = np.array(args[4:8], dtype=float)
         if self.invert_vmc_zw:
             rot[2] = -rot[2]
             rot[3] = -rot[3]
         
         with self._lock:
-            # 更新旋转
+            # Update latest rotation.
             self.raw_rots[canon_name] = rot
             self.recv_count += 1
             self.last_recv_ts = time.time()
     
     def solve_fk(self):
-        """核心：计算正向运动学"""
+        """Core FK solver."""
         with self._lock:
             current_rots = self.raw_rots.copy()
             axis_cfg = dict(self.axis_cfg)
@@ -303,21 +303,18 @@ class VMCFKReceiver:
             ref_delay_s = float(self.ref_delay_s)
             t_start = float(self._t_start)
 
-        # 1. Hips (Root) 比较特殊
-        # 如果你希望 Hips 随 SlimeVR 移动，这里需要读取 Hips 的 Pos
-        # 但既然 SlimeVR 没发 Pos，我们通常把 Hips 固定在 (0, 1.0, 0) 或者只允许旋转
+        # 1. Hips (root) is special.
+        # If SlimeVR root position is unavailable, keep hips at a fixed position.
         global_positions = {}
         global_rotations = {}
         base_basis = _basis_matrix(axis_cfg)
 
-        # 简单的层级遍历解算
-        # 为了保证父骨骼先算，我们按层级顺序处理
-        # 这里用一种简单粗暴的方法：递归或者按列表顺序（STD_SKELETON 字典序不一定对，需排序）
+        # Solve hierarchically so parent transforms are available first.
         
-        # 建立处理顺序 (简单拓扑排序)
+        # Build processing order (simple topological strategy).
         process_queue = ["Hips"]
         
-        # Hips 初始化
+        # Initialize hips.
         hips_rot = current_rots.get("Hips", np.array([0.,0.,0.,1.]))
         hips_rot_m = _quat_to_mat_xyzw(hips_rot)
         hips_basis = _basis_matrix(self.bone_axis_override.get("Hips", axis_cfg))
@@ -325,28 +322,28 @@ class VMCFKReceiver:
         if self.align_bvh_axes_to_std and "Hips" in self.bvh_axis_to_std:
             R = self.bvh_axis_to_std["Hips"]
             hips_rot_m = R.T @ hips_rot_m @ R
-        global_positions["Hips"] = np.array([0.0, 1.0, 0.0]) # 强制把人放在高 1米处
+        global_positions["Hips"] = np.array([0.0, 1.0, 0.0])  # Place root at 1m height.
         global_rotations["Hips"] = hips_rot_m
 
         processed = {"Hips"}
         
-        # 循环直到算完所有骨骼
+        # Iterate until all bones are solved.
         while len(processed) < len(STD_SKELETON):
-            # 找一个父节点已经算过的骨骼
+            # Pick a bone whose parent has already been solved.
             for bone, (parent, offset) in STD_SKELETON.items():
                 if bone in processed: continue
                 if parent in processed:
-                    # 找到了，计算这个骨骼
+                    # Parent is ready, solve current bone.
                     parent_pos = global_positions[parent]
                     parent_rot = global_rotations[parent]
                     
-                    # 关键公式：
-                    # 子骨骼世界坐标 = 父骨骼世界坐标 + (父骨骼世界旋转 * 骨骼长度偏移)
+                    # Core formula:
+                    # child_world_pos = parent_world_pos + parent_world_rot * local_offset
                     offset_vec = np.array(offset)
                     rotated_offset = parent_rot @ offset_vec
                     curr_pos = parent_pos + rotated_offset
                     
-                    # 计算当前骨骼的世界旋转
+                    # Compute current bone global rotation.
                     bone_rot = current_rots.get(bone, np.array([0.,0.,0.,1.]))
                     bone_rot_m = _quat_to_mat_xyzw(bone_rot)
                     bone_basis = _basis_matrix(self.bone_axis_override.get(bone, axis_cfg))
@@ -667,7 +664,7 @@ def main():
         upperarm_cycle_idx = 0
         last_upperarm_cycle_t = time.time() - float(args.upperarm_cycle_seconds)
         while True:
-            # 1. 解算
+            # 1) Solve FK.
             positions = receiver.solve_fk()
             if bool(args.log_every) and (frame_idx % int(args.log_every) == 0):
                 print(f"[Viewer] frame={frame_idx} joints={len(positions)} recv={receiver.recv_count}", flush=True)
@@ -683,7 +680,7 @@ def main():
                 print(f"[Viewer] heartbeat frame={frame_idx}")
                 last_heartbeat = time.time()
             
-            # 2. 绘图
+            # 2) Draw frame.
             ax.cla()
             ax.set_xlabel('X'); ax.set_ylabel('Z (Depth)'); ax.set_zlabel('Y (Up)')
             
@@ -706,14 +703,14 @@ def main():
                     plt.pause(0.1)
                 continue
 
-            # 画线
+            # Draw skeleton edges.
             if bool(args.auto_cycle) and cycle_cfgs:
                 now = time.time()
                 if (now - last_cycle_t) >= float(args.cycle_seconds):
                     last_cycle_t = now
                     cycle_idx = (cycle_idx + 1) % len(cycle_cfgs)
                     if bool(args.cycle_once) and cycle_idx == 0:
-                        print("✅ 已完成一轮组合，停止。")
+                        print("[OK] Completed one full axis-cycle pass. Stopping.")
                         return
                     cfg = cycle_cfgs[cycle_idx]
                     receiver.name_map = dict(base_name_map)
@@ -758,7 +755,7 @@ def main():
                     last_upperarm_cycle_t = now
                     upperarm_cycle_idx = (upperarm_cycle_idx + 1) % len(upperarm_cycle_cfgs)
                     if bool(args.upperarm_cycle_once) and upperarm_cycle_idx == 0:
-                        print("✅ 已完成 UpperArm 轴组合，停止。")
+                        print("[OK] Completed one full UpperArm axis-cycle pass. Stopping.")
                         return
                     cfg = upperarm_cycle_cfgs[upperarm_cycle_idx]
                     receiver.bone_axis_override = dict(base_bone_axis_override)
@@ -769,8 +766,8 @@ def main():
                 if p1 in positions and p2 in positions:
                     pos1 = positions[p1] * float(args.pos_scale)
                     pos2 = positions[p2] * float(args.pos_scale)
-                    # 注意 Matplotlib 的坐标系，通常 Z 是垂直，但这里我们用 Y 垂直
-                    # 我们手动映射：x->x, z->y(depth), y->z(height) 以便观察
+                    # Matplotlib axis mapping for readability:
+                    # x->x, z->y(depth), y->z(height)
                     ax.plot([pos1[0], pos2[0]], [pos1[2], pos2[2]], [pos1[1], pos2[1]], c='r', marker='o')
 
             # bounds

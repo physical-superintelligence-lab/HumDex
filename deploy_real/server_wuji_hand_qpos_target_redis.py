@@ -35,7 +35,7 @@ def now_ms() -> int:
 try:
     import wujihandpy
 except ImportError:
-    print("❌ Error: wujihandpy is not installed. Please install it first:")
+    print("[ERROR] Error: wujihandpy is not installed. Please install it first:")
     print("   pip install wujihandpy")
     sys.exit(1)
 
@@ -75,10 +75,10 @@ class WujiHandDirectQposRedisController:
         self.serial_number = (serial_number or "").strip()
 
         # Redis connection
-        print(f"🔗 Connecting Redis: {redis_ip}")
+        print(f"[INFO] Connecting Redis: {redis_ip}")
         self.redis_client = redis.Redis(host=redis_ip, port=6379, decode_responses=False)
         self.redis_client.ping()
-        print("✅ Redis connected")
+        print("[OK] Redis connected")
 
         # Redis keys (keep naming consistent with server_wuji_hand_redis.py)
         self.redis_key_action_wuji_qpos_target = f"action_wuji_qpos_target_{self.hand_side}_{self.robot_key}"
@@ -88,9 +88,9 @@ class WujiHandDirectQposRedisController:
         self.redis_key_wuji_mode = f"wuji_hand_mode_{self.hand_side}_{self.robot_key}"
 
         # Init Wuji hand
-        print(f"🤖 Initializing Wuji {self.hand_side} hand...")
+        print(f"[INFO] Initializing Wuji {self.hand_side} hand...")
         if self.serial_number:
-            print(f"🔌 Using serial_number: {self.serial_number}")
+            print(f"[INFO] Using serial_number: {self.serial_number}")
             self.hand = wujihandpy.Hand(serial_number=self.serial_number)
         else:
             self.hand = wujihandpy.Hand()
@@ -142,7 +142,7 @@ class WujiHandDirectQposRedisController:
             pass
 
     def run(self):
-        print(f"\n🚀 Direct-qpos control loop ({self.hand_side}) @ {self.target_fps} Hz")
+        print(f"\n[INFO] Direct-qpos control loop ({self.hand_side}) @ {self.target_fps} Hz")
         print("Ctrl+C to exit\n")
 
         def _handle_signal(signum, _frame):
@@ -191,7 +191,7 @@ class WujiHandDirectQposRedisController:
             self.cleanup()
 
     def cleanup(self):
-        print("\n🛑 Shutting down Wuji controller...")
+        print("\n[STOP] Shutting down Wuji controller...")
         try:
             # Move to zero pose
             if self._stop_requested_by_signal == signal.SIGTERM:
@@ -205,7 +205,7 @@ class WujiHandDirectQposRedisController:
             self.hand.write_joint_enabled(False)
         except Exception:
             pass
-        print("✅ Done.")
+        print("[OK] Done.")
 
 
 def parse_arguments():

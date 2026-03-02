@@ -45,7 +45,7 @@ class VirdynMocap:
             else:
                 self.idx = self.T - 1
 
-        # 模拟实时频率
+        # 
         if self.sleep_dt is not None and self.sleep_dt > 0:
             time.sleep(self.sleep_dt)
 
@@ -54,9 +54,9 @@ class VirdynMocap:
 
 class WujiHand:
     """
-    Wuji 灵巧手（sim 版本）封装：
-    - 内部用 GeoRT 的 HandKinematicModel 加载 wuji_right 的 urdf
-    - command(qpos) 直接发到 PD drive target
+    Wuji (sim ):
+    -  GeoRT  HandKinematicModel  wuji_right  urdf
+    - command(qpos)  PD drive target
     """
     def __init__(self, hand_name: str = "wuji_right", render: bool = True):
         config = get_config(hand_name)

@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # Wuji Hand Controller via Redis
-# 从 Redis 读取 teleop.sh 发送的手部控制数据，实时控制 Wuji 灵巧手
+# Read hand control data from Redis and drive Wuji hand in real time.
 
 source ~/miniconda3/bin/activate twist2
 SCRIPT_DIR=$(dirname $(realpath $0))
 cd deploy_real
 
-# 配置参数
+# Runtime configuration
 redis_ip="localhost"
-hand_side="left"  # "left" 或 "right"
+hand_side="left"  # "left" or "right"
 target_fps=50
 retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_manus_${hand_side}.yaml"
 
-# 运行控制器
+# Start controller
 python server_wuji_hand_redis.py \
     --hand_side ${hand_side} \
     --config ${retarget_config} \

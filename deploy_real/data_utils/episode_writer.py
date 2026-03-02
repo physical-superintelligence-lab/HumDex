@@ -216,7 +216,7 @@ class EpisodeWriter():
             try:
                 self._save_episode_video()
             except Exception as e:
-                print(f"[EpisodeWriter] ⚠️ failed to save episode video: {e}")
+                print(f"[EpisodeWriter] [WARN] failed to save episode video: {e}")
         self.need_save = False     # Reset the save flag
         self.is_available = True   # Mark the class as available after saving
         print(f"==> Episode (length:{len(self.episode_data)}) saved successfully to {self.json_path}.")
@@ -264,7 +264,7 @@ class EpisodeWriter():
             writer.write(img)  # BGR
             n_written += 1
         writer.release()
-        print(f"[EpisodeWriter] ✅ saved video: {out_path} ({n_written} frames @ {self.video_fps:.1f} fps)")
+        print(f"[EpisodeWriter] [OK] saved video: {out_path} ({n_written} frames @ {self.video_fps:.1f} fps)")
 
     def close(self):
         """

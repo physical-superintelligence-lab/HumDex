@@ -103,8 +103,8 @@ class RealSenseVisionSource:
             import pyrealsense2 as rs  # type: ignore
         except Exception as e:
             raise ImportError(
-                "未安装 pyrealsense2。若你在笔记本上录制（相机在 g1 上），建议用 --vision_backend zmq 走网络流；"
-                "若你要在 g1 本机直连 RealSense，请先安装 pyrealsense2。"
+                "pyrealsense2 is not installed. If you record on a laptop while cameras run on g1, "
+                "use --vision_backend zmq. If you capture directly on g1, install pyrealsense2 first."
             ) from e
 
         self._rs = rs
@@ -274,50 +274,50 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Record vision + (body/hand) state/action from Redis (keyboard control).")
 
     # storage
-    parser.add_argument("--data_folder", default=default_data_folder, help="数据保存根目录")
-    parser.add_argument("--task_name", default=cur_time, help="任务名（子目录）")
-    parser.add_argument("--frequency", default=30, type=int, help="录制频率 Hz")
+    parser.add_argument("--data_folder", default=default_data_folder, help="Root directory to save recorded data")
+    parser.add_argument("--task_name", default=cur_time, help="Task name (subdirectory)")
+    parser.add_argument("--frequency", default=30, type=int, help="Recording frequency in Hz")
 
     # redis
-    parser.add_argument("--redis_ip", default="localhost", help="Redis IP（注意：必须能读到 sim2real/teleop 写入的数据）")
-    parser.add_argument("--redis_port", default=6379, type=int, help="Redis 端口")
+    parser.add_argument("--redis_ip", default="localhost", help="Redis host (must be reachable from this recorder)")
+    parser.add_argument("--redis_port", default=6379, type=int, help="Redis port")
 
     # key namespace
-    parser.add_argument("--robot_key", default="unitree_g1_with_hands", help="Redis key 后缀，例如 unitree_g1_with_hands")
-    parser.add_argument("--channel", choices=["twist2", "sonic"], default="twist2", help="数据通道标签（影响 Redis key 读取回退策略）")
-    parser.add_argument("--sonic_body_backend", choices=["redis", "zmq"], default="zmq", help="sonic通道下 body 数据来源")
-    parser.add_argument("--body_zmq_ip", default="127.0.0.1", help="body ZMQ 发布端 IP（sonic+zmq 时使用）")
-    parser.add_argument("--body_zmq_port", default=5556, type=int, help="body ZMQ 发布端端口（sonic+zmq 时使用）")
-    parser.add_argument("--body_zmq_topic", default="pose", help="body ZMQ topic（sonic+zmq 时使用）")
+    parser.add_argument("--robot_key", default="unitree_g1_with_hands", help="Redis key suffix, e.g. unitree_g1_with_hands")
+    parser.add_argument("--channel", choices=["twist2", "sonic"], default="twist2", help="Channel label used for Redis key fallback policy")
+    parser.add_argument("--sonic_body_backend", choices=["redis", "zmq"], default="zmq", help="Body source for sonic channel")
+    parser.add_argument("--body_zmq_ip", default="127.0.0.1", help="Body ZMQ publisher IP (used when sonic+zmq)")
+    parser.add_argument("--body_zmq_port", default=5556, type=int, help="Body ZMQ publisher port (used when sonic+zmq)")
+    parser.add_argument("--body_zmq_topic", default="pose", help="Body ZMQ topic (used when sonic+zmq)")
 
     # vision
-    parser.add_argument("--vision_backend", choices=["zmq", "realsense"], default="zmq", help="图像来源：zmq(网络流) 或 realsense(直连)")
-    parser.add_argument("--vision_ip", default="192.168.123.164", help="ZMQ 图像服务器 IP（vision_backend=zmq 才用）")
-    parser.add_argument("--vision_port", default=5555, type=int, help="ZMQ 图像服务器端口（vision_backend=zmq 才用）")
+    parser.add_argument("--vision_backend", choices=["zmq", "realsense"], default="zmq", help="Image source: zmq (network stream) or realsense (direct capture)")
+    parser.add_argument("--vision_ip", default="192.168.123.164", help="ZMQ image server IP (used when vision_backend=zmq)")
+    parser.add_argument("--vision_port", default=5555, type=int, help="ZMQ image server port (used when vision_backend=zmq)")
 
     parser.add_argument("--img_h", default=480, type=int)
     parser.add_argument("--img_w", default=640, type=int)
     parser.add_argument("--img_c", default=3, type=int)
 
     # realsense
-    parser.add_argument("--rs_w", default=640, type=int, help="RealSense 宽（vision_backend=realsense）")
-    parser.add_argument("--rs_h", default=480, type=int, help="RealSense 高（vision_backend=realsense）")
-    parser.add_argument("--rs_fps", default=30, type=int, help="RealSense FPS（vision_backend=realsense）")
-    parser.add_argument("--rs_depth", action="store_true", help="保存 RealSense 深度帧（会写进 data.json，不会保存成图片文件）")
+    parser.add_argument("--rs_w", default=640, type=int, help="RealSense width (vision_backend=realsense)")
+    parser.add_argument("--rs_h", default=480, type=int, help="RealSense height (vision_backend=realsense)")
+    parser.add_argument("--rs_fps", default=30, type=int, help="RealSense FPS (vision_backend=realsense)")
+    parser.add_argument("--rs_depth", action="store_true", help="Save RealSense depth frames into data.json (not as image files)")
 
     # output video
-    parser.add_argument("--save_episode_video", action="store_true", help="每个 episode 保存一份 mp4 到 task_dir/videos/ 下")
+    parser.add_argument("--save_episode_video", action="store_true", help="Save one mp4 per episode under task_dir/videos/")
 
     # ui / keyboard
-    parser.add_argument("--no_window", action="store_true", help="不显示窗口（默认按键来自 OpenCV 窗口；无窗口建议用 --keyboard_backend evdev）")
+    parser.add_argument("--no_window", action="store_true", help="Disable preview window (OpenCV key input requires window focus; for headless mode use --keyboard_backend evdev)")
     parser.add_argument(
         "--keyboard_backend",
         choices=["opencv", "evdev"],
         default="opencv",
-        help="按键后端：opencv(需要窗口在前台) / evdev(全局热键，不依赖前台，但需要 /dev/input 权限)",
+        help="Keyboard backend: opencv (window focus required) / evdev (global hotkeys, requires /dev/input permissions)",
     )
-    parser.add_argument("--evdev_device", type=str, default="auto", help="evdev 设备路径，如 /dev/input/event3 或 /dev/input/by-id/...；auto 尝试自动选择")
-    parser.add_argument("--evdev_grab", action="store_true", help="evdev grab（可能影响系统其他程序收到按键，谨慎使用）")
+    parser.add_argument("--evdev_device", type=str, default="auto", help="evdev device path, e.g. /dev/input/event3 or /dev/input/by-id/...; auto tries to select one")
+    parser.add_argument("--evdev_grab", action="store_true", help="Enable evdev grab (may block key events for other applications)")
 
     return parser.parse_args()
 
@@ -386,9 +386,9 @@ def main():
         redis_client = redis.Redis(connection_pool=redis_pool)
         redis_pipeline = redis_client.pipeline()
         redis_client.ping()
-        print(f"✅ Connected to Redis at {args.redis_ip}:{args.redis_port}, DB=0")
+        print(f"[OK] Connected to Redis at {args.redis_ip}:{args.redis_port}, DB=0")
     except Exception as e:
-        print(f"❌ Error connecting to Redis: {e}")
+        print(f"[ERROR] Error connecting to Redis: {e}")
         return
 
     # Vision source
@@ -411,7 +411,7 @@ def main():
                 enable_depth=args.rs_depth,
             )
     except Exception as e:
-        print(f"❌ Vision init failed: {e}")
+        print(f"[ERROR] Vision init failed: {e}")
         return
 
     # Recorder
@@ -450,7 +450,7 @@ def main():
     window_name = "TWIST2 Data Recorder (keyboard: r=rec start/stop, q=quit)"
     window_enabled = not bool(args.no_window)
     if window_enabled:
-        # 无论 keyboard_backend 是 opencv 还是 evdev，都显示窗口（evdev 模式仅显示，不用窗口读按键）
+        # Always show preview when enabled; evdev mode does not read keys from this window.
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
     # optional global hotkeys via evdev
@@ -467,13 +467,13 @@ def main():
         evdev_listener = EvdevHotkeys(cfg, callback=_on_hotkey)
         try:
             evdev_listener.start()
-            print("[Keyboard] backend=evdev（全局热键，不依赖前台窗口/终端）")
+            print("[Keyboard] backend=evdev (global hotkeys, no terminal/window focus needed)")
             print(f"[Keyboard] evdev_device={cfg.device} grab={cfg.grab}")
             print("Keys: press 'r' to start/stop recording; press 'q' to quit")
         except Exception as e:
-            print(f"❌ evdev 键盘监听启动失败：{e}")
-            print("   你可能需要：pip install evdev，以及对 /dev/input/event* 的读权限（root 或加入 input 组）。")
-            # 关键：在这里就退出的话，要把 ZMQ 共享内存也释放掉，避免 resource_tracker 报泄漏
+            print(f"[ERROR] Failed to start evdev hotkey listener: {e}")
+            print("   You may need: pip install evdev, plus read permission on /dev/input/event* (root or input group).")
+            # Important: release resources before returning to avoid tracker leak warnings.
             try:
                 recorder.close()
             except Exception:
@@ -494,7 +494,7 @@ def main():
             if rgb is None:
                 rgb = np.zeros((args.img_h, args.img_w, 3), dtype=np.uint8)
 
-            # 预览窗口（始终显示；按键仅在 backend=opencv 时生效）
+            # Preview window (always shown when enabled); key input only applies in opencv backend.
             if window_enabled:
                 overlay = rgb.copy()
                 status = "REC: ON" if recording else "REC: OFF"
@@ -504,7 +504,7 @@ def main():
                 else:
                     cv2.putText(overlay, "keys(evdev global): r=start/stop, q=quit", (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
                 cv2.imshow(window_name, overlay)
-                # IMPORTANT: 即使不使用 opencv 读键，也要 waitKey(1) 保持窗口刷新/响应
+                # IMPORTANT: call waitKey(1) even in evdev mode to keep window UI responsive.
                 key = cv2.waitKey(1) & 0xFF
                 if str(args.keyboard_backend).lower() == "opencv":
                     if key == ord("q"):
@@ -515,15 +515,15 @@ def main():
                         if recording:
                             if recorder.create_episode():
                                 step_count = 0
-                                print("✅ episode recording started")
+                                print("[OK] episode recording started")
                             else:
                                 recording = False
                         else:
                             recorder.save_episode()
-                            print("✅ episode saving triggered")
+                            print("[OK] episode saving triggered")
 
             if str(args.keyboard_backend).lower() == "evdev":
-                # 全局热键：无需窗口在前台
+                # Global hotkeys: no foreground window required.
                 if evdev_keys.get("q", False):
                     evdev_keys["q"] = False
                     running = False
@@ -534,12 +534,12 @@ def main():
                     if recording:
                         if recorder.create_episode():
                             step_count = 0
-                            print("✅ episode recording started")
+                            print("[OK] episode recording started")
                         else:
                             recording = False
                     else:
                         recorder.save_episode()
-                        print("✅ episode saving triggered")
+                        print("[OK] episode saving triggered")
 
             if recording:
                 data_dict: Dict[str, Any] = {"idx": step_count}
@@ -568,7 +568,7 @@ def main():
                         data_dict[dk] = safe_json_loads(raw)
                 except Exception as e:
                     # Skip this frame but keep loop alive
-                    print(f"⚠️ Redis read error: {e}")
+                    print(f"[WARN] Redis read error: {e}")
                     continue
                 if body_zmq is not None:
                     zmq_packet = body_zmq.get_latest()

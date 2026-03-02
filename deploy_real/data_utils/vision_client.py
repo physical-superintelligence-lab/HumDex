@@ -213,18 +213,18 @@ class VisionClient:
                 try:
                     start_time = time.time()
 
-                    # 接收消息
+                    # Receive message.
                     message = self.socket.recv(zmq.NOBLOCK)
                 
-                    if len(message) < 12:  # 至少需要12字节的头部
+                    if len(message) < 12:  # At least 12 bytes are required for header.
                         continue
                     
-                    # 解析头部信息：[宽度][高度][JPEG数据长度]
+                    # Parse header: [width][height][jpeg_length]
                     width = struct.unpack('i', message[0:4])[0]
                     height = struct.unpack('i', message[4:8])[0]
                     jpeg_length = struct.unpack('i', message[8:12])[0]
                     
-                    # 验证JPEG数据长度
+                    # Validate JPEG payload length.
                     actual_jpeg_size = len(message) - 12
                     
                     if actual_jpeg_size != jpeg_length:
@@ -232,11 +232,11 @@ class VisionClient:
                             print(f"[Warning] JPEG size mismatch: expected {jpeg_length}, got {actual_jpeg_size}")
                         continue
                     
-                    # 提取JPEG数据并解码
+                    # Extract and decode JPEG payload.
                     jpeg_data = message[12:]
                     
                     try:
-                        # 使用OpenCV解码JPEG数据
+                        # Decode JPEG bytes with OpenCV.
                         image = cv2.imdecode(np.frombuffer(jpeg_data, dtype=np.uint8), cv2.IMREAD_COLOR)
                         
                         if image is None:
@@ -244,11 +244,11 @@ class VisionClient:
                                 print("[Warning] Failed to decode JPEG image")
                             continue
                             
-                        # 验证解码后的图像尺寸
+                        # Validate decoded image size.
                         if image.shape[0] != height or image.shape[1] != width:
                             if verbose:
                                 print(f"[Warning] Decoded image size {image.shape} doesn't match expected {height}x{width}")
-                            # 但仍继续处理，因为JPEG解码可能产生轻微的尺寸差异
+                            # Continue anyway since JPEG decoding can introduce slight size differences.
                         
                     except Exception as e:
                         if verbose:
@@ -278,7 +278,7 @@ class VisionClient:
                     self._update_performance_metrics(print_info)
 
                 except zmq.Again:
-                    # 没有消息，继续
+                    # No new message, keep polling.
                     time.sleep(0.001)
                     continue
 

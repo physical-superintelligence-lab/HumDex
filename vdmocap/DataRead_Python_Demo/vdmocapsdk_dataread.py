@@ -9,7 +9,7 @@ if platform.system() == "Windows":
     SDK_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                             'VDMocapSDK_DataRead.dll')
 else:
-    # 该 Demo 的 .so 文件是 Ubuntu 22.04 x64 的，如使用 Ubuntu 20.04 或 arm64 需自行更换 .so 文件 
+    #  Demo  .so  Ubuntu 22.04 x64 , Ubuntu 20.04  arm64  .so  
     SDK_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                             'libVDMocapSDK_DataRead.so')
 DATAREAD = CDLL(SDK_PATH)

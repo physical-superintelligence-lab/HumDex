@@ -238,7 +238,7 @@ def apply_geo_to_bvh_official_pos_only(frame: Dict[str, Any]) -> Dict[str, Any]:
 def apply_quat_left_multiply(frame: Dict[str, Any], qL_wxyz: np.ndarray) -> Dict[str, Any]:
     """
     Apply a left-multiply quaternion to ALL joint quaternions:
-        q' = qL ⊗ q
+        q' = qL  q
     Positions are kept unchanged.
 
     Useful when positions are already aligned but quaternion convention needs a global fix.
@@ -261,7 +261,7 @@ def apply_quat_left_multiply_per_joint(
 ) -> Dict[str, Any]:
     """
     Apply a (possibly different) left-multiply quaternion per joint:
-        q'_j = qL_map[j] ⊗ q_j
+        q'_j = qL_map[j]  q_j
     If a joint is not in qL_map, use default_qL_wxyz if provided; otherwise keep unchanged.
     Positions are unchanged.
     """
@@ -290,7 +290,7 @@ def apply_quat_left_multiply_per_joint(
 def apply_quat_right_multiply(frame: Dict[str, Any], qR_wxyz: np.ndarray) -> Dict[str, Any]:
     """
     Right-multiply quaternion to ALL joint quaternions:
-        q' = q ⊗ qR
+        q' = q  qR
     Positions unchanged.
     """
     qR = quat_normalize_wxyz(np.asarray(qR_wxyz, dtype=np.float32).reshape(4))
@@ -311,7 +311,7 @@ def apply_quat_right_multiply_per_joint(
 ) -> Dict[str, Any]:
     """
     Apply a (possibly different) right-multiply quaternion per joint:
-        q'_j = q_j ⊗ qR_map[j]
+        q'_j = q_j  qR_map[j]
     If joint not in map, use default_qR_wxyz if provided; otherwise keep unchanged.
     Positions unchanged.
     """
@@ -473,7 +473,7 @@ def estimate_canonical_rotation_from_frame(frame: Dict[str, Any]) -> Optional[np
 
 def apply_global_rotation(frame: Dict[str, Any], R: np.ndarray) -> Dict[str, Any]:
     """
-    Apply p' = R @ p and q' = qR ⊗ q to every joint in a frame.
+    Apply p' = R @ p and q' = qR  q to every joint in a frame.
     """
     R = np.asarray(R, dtype=np.float32).reshape(3, 3)
     qR = rotmat_to_quat_wxyz(R)
@@ -554,8 +554,8 @@ def apply_bvh_like_coordinate_transform(
             # Convert coords to BVH/GMR convention.
             # - positions: p' = rot_m @ p  (equivalently p @ rot_m.T for 1D)
             # - rotations:
-            #   - global mode: q' = qR ⊗ q  (rotate the world frame)
-            #   - basis  mode: q' = qR ⊗ q ⊗ qR^{-1} (change of basis, keeps physical orientation)
+            #   - global mode: q' = qR  q  (rotate the world frame)
+            #   - basis  mode: q' = qR  q  qR^{-1} (change of basis, keeps physical orientation)
             if bool(apply_pos_rotation):
                 pos = pos @ rot_m.T
             if bool(apply_quat_rotation):
@@ -885,7 +885,7 @@ def apply_similarity_transform_frame(
     """
     Apply similarity transform to a frame:
       p' = s * (R p) + t
-      q' = qR ⊗ q
+      q' = qR  q
     """
     Rm = np.asarray(Rm, dtype=np.float32).reshape(3, 3)
     t = np.asarray(t, dtype=np.float32).reshape(3)

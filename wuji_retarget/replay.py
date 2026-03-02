@@ -10,7 +10,7 @@ from geort.env.hand import HandKinematicModel
 def find_key(pack_files, prefer_key: str):
     if prefer_key in pack_files:
         return prefer_key
-    # 常见备选
+    # 
     for k in ["fingertips_rel_wrist", "human_points", "keypoints_rel_wrist"]:
         if k in pack_files:
             return k

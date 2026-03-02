@@ -2,14 +2,14 @@
 """
 Wuji Hand Controller via Redis (Policy Inference)
 
-从 Redis 读取 teleop.sh 发送的手部追踪数据（26维），转换为21维 MediaPipe 格式，
-做必要的坐标变换后，喂给你的 retarget policy model 做 inference，
-得到 Wuji 5x4=20 维关节目标，并实时下发到硬件。
+ Redis  teleop.sh (26),21 MediaPipe ,
+, retarget policy model  inference,
+ Wuji 5x4=20 ,.
 
-- 原来的：Redis 读写、follow/hold/default 模式、平滑控制、可视化（OpenCV/Open3D）
-- 将 WujiHandRetargeter.retarget(...) 替换为 policy.forward(...)
-- 默认用 5 个指尖点（Thumb/Index/Middle/Ring/Pinky tip）作为 policy 输入（(5,3)）
-- 增加：输出限幅 + 速度限制（rate limit），更安全地驱动硬件
+- :Redis ,follow/hold/default ,,(OpenCV/Open3D)
+-  WujiHandRetargeter.retarget(...)  policy.forward(...)
+-  5 (Thumb/Index/Middle/Ring/Pinky tip) policy ((5,3))
+- : + (rate limit),
 """
 
 import argparse
@@ -55,11 +55,11 @@ except Exception as e:
 try:
     import wujihandpy
 except ImportError:
-    print("❌ 错误: 未安装 wujihandpy，请先安装:")
+    print("[ERROR] :  wujihandpy,:")
     print("   pip install wujihandpy")
     sys.exit(1)
 
-# 添加 wuji_retargeting 到路径（仍可保留其中的 mediapipe 坐标变换函数）
+#  wuji_retargeting ( mediapipe )
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WUJI_RETARGETING_PATH = PROJECT_ROOT / "wuji_retargeting"
 if str(WUJI_RETARGETING_PATH) not in sys.path:
@@ -68,8 +68,8 @@ if str(WUJI_RETARGETING_PATH) not in sys.path:
 try:
     from wuji_retargeting.mediapipe import apply_mediapipe_transformations
 except ImportError as e:
-    print(f"❌ 错误: 无法导入 wuji_retargeting.mediapipe: {e}")
-    print("   请确保 wuji_retargeting 已正确安装（至少包含 mediapipe 的 transformations）")
+    print(f"[ERROR] :  wuji_retargeting.mediapipe: {e}")
+    print("    wuji_retargeting ( mediapipe  transformations)")
     sys.exit(1)
 
 # ------------------------------
@@ -100,9 +100,9 @@ HAND_JOINT_NAMES_26 = [
 
 # ------------------------------
 # 26D -> 21D mapping
-# 注意：这里按你的原实现保留（第0个点来自 index=1，也就是 Palm）
-# 如果你希望 wrist 为真正 Wrist（index=0），请把第一个元素改为 0
-# 并相应调整整体逻辑。
+# :(0 index=1, Palm)
+#  wrist  Wrist(index=0), 0
+# .
 # ------------------------------
 MEDIAPIPE_MAPPING_26_TO_21 = [
     1,   # 0: Wrist -> Wrist  (NOTE: your code uses Palm as wrist)
@@ -270,18 +270,18 @@ class _Hand21DViz3D:
     def init(self) -> bool:
         if not _O3D_AVAILABLE or o3d is None:
             if _O3D_IMPORT_ERROR:
-                print(f"⚠️  Open3D 导入失败: {_O3D_IMPORT_ERROR}")
+                print(f"[WARN]  Open3D : {_O3D_IMPORT_ERROR}")
             return False
         try:
             has_display = bool(os.environ.get("DISPLAY")) or bool(os.environ.get("WAYLAND_DISPLAY"))
             if not has_display:
-                print("⚠️  Open3D 3D 可视化：未检测到 DISPLAY/WAYLAND_DISPLAY，可能是无桌面或 SSH 未开启 X 转发。")
+                print("[WARN]  Open3D 3D : DISPLAY/WAYLAND_DISPLAY, SSH  X .")
                 return False
 
             vis = o3d.visualization.Visualizer()
             ok = bool(vis.create_window(window_name=self.win_name, width=900, height=700, visible=True))
             if not ok:
-                print("⚠️  Open3D 3D 可视化：create_window() 失败（通常是图形/GL 依赖缺失或显示环境异常）。")
+                print("[WARN]  Open3D 3D :create_window() (/GL ).")
                 return False
 
             self._vis = vis
@@ -298,7 +298,7 @@ class _Hand21DViz3D:
             self._inited = True
             return True
         except Exception:
-            print("⚠️  Open3D 3D 可视化：初始化异常（可能是 GL/GUI 依赖问题）。")
+            print("[WARN]  Open3D 3D :( GL/GUI ).")
             return False
 
     def close(self):
@@ -373,7 +373,7 @@ def hand_26d_to_mediapipe_21d(hand_data_dict, hand_side="left", print_distances=
 
     if print_distances:
         fingertip_indices = {"Thumb": 4, "Index": 8, "Middle": 12, "Ring": 16, "Pinky": 20}
-        print("\n📏 手腕到各指尖的距离 (单位: 米):")
+        print("\n[INFO]  (: ):")
         for finger_name, tip_idx in fingertip_indices.items():
             tip_pos = mediapipe_21d[tip_idx]
             distance = np.linalg.norm(tip_pos - mediapipe_21d[0])
@@ -451,10 +451,10 @@ class WujiHandRedisController:
         self.max_delta_per_step = float(max_delta_per_step)
 
         # connect redis
-        print(f"🔗 连接 Redis: {redis_ip}")
+        print(f"[INFO]  Redis: {redis_ip}")
         self.redis_client = redis.Redis(host=redis_ip, port=6379, decode_responses=False)
         self.redis_client.ping()
-        print("✅ Redis 连接成功")
+        print("[OK] Redis ")
 
         self.robot_key = "unitree_g1_with_hands"
         self.redis_key_hand_tracking = f"hand_tracking_{self.hand_side}_{self.robot_key}"
@@ -465,9 +465,9 @@ class WujiHandRedisController:
         self.redis_key_wuji_mode = f"wuji_hand_mode_{self.hand_side}_{self.robot_key}"
 
         # init hardware
-        print(f"🤖 初始化 Wuji {self.hand_side} 手...")
+        print(f"[INFO]  Wuji {self.hand_side} ...")
         if self.serial_number:
-            print(f"🔌 使用 serial_number 选择设备: {self.serial_number}")
+            print(f"[INFO]  serial_number : {self.serial_number}")
             self.hand = wujihandpy.Hand(serial_number=self.serial_number)
         else:
             self.hand = wujihandpy.Hand()
@@ -481,16 +481,16 @@ class WujiHandRedisController:
 
         actual_pose = self.hand.read_joint_actual_position()
         self.zero_pose = np.zeros_like(actual_pose, dtype=np.float32)
-        print(f"✅ Wuji {self.hand_side} 手初始化完成")
+        print(f"[OK] Wuji {self.hand_side} ")
 
         # init policy
-        print("🔄 加载 Retarget Policy Model...")
+        print("[INFO]  Retarget Policy Model...")
         self.policy = geort.load_model(self.policy_tag, epoch=self.policy_epoch)
         try:
             self.policy.eval()
         except Exception:
             pass
-        print(f"✅ Policy loaded: tag={self.policy_tag}, epoch={self.policy_epoch}")
+        print(f"[OK] Policy loaded: tag={self.policy_tag}, epoch={self.policy_epoch}")
 
         # state
         self.last_qpos = self.zero_pose.copy()
@@ -549,7 +549,7 @@ class WujiHandRedisController:
             data = self.redis_client.get(self.redis_key_hand_tracking)
             if data is None:
                 if not hasattr(self, "_debug_key_printed"):
-                    print(f"⚠️  Redis key '{self.redis_key_hand_tracking}' 不存在或为空")
+                    print(f"[WARN]  Redis key '{self.redis_key_hand_tracking}' ")
                     self._debug_key_printed = True
                 return None, None
 
@@ -558,7 +558,7 @@ class WujiHandRedisController:
 
             hand_data = json.loads(data)
             if not isinstance(hand_data, dict):
-                print(f"⚠️  数据格式错误: 期望 dict，得到 {type(hand_data)}")
+                print(f"[WARN]  :  dict, {type(hand_data)}")
                 return None, None
 
             data_timestamp = hand_data.get("timestamp", 0)
@@ -566,36 +566,36 @@ class WujiHandRedisController:
             time_diff_ms = current_time_ms - data_timestamp
             if time_diff_ms > 500:
                 if not hasattr(self, "_debug_stale_printed"):
-                    print(f"⚠️  数据过期 (时间差: {time_diff_ms}ms > 500ms)")
+                    print(f"[WARN]   (: {time_diff_ms}ms > 500ms)")
                     self._debug_stale_printed = True
                 return None, None
 
             is_active = hand_data.get("is_active", False)
             if not is_active:
                 if not hasattr(self, "_debug_inactive_printed"):
-                    print("⚠️  手部追踪数据 is_active=False")
+                    print("[WARN]   is_active=False")
                     self._debug_inactive_printed = True
                 return None, None
 
             hand_dict = {k: v for k, v in hand_data.items() if k not in ["is_active", "timestamp"]}
             if not hasattr(self, "_debug_success_printed"):
-                print(f"✅ 成功从 Redis 读取手部追踪数据 (key: {self.redis_key_hand_tracking}, 关节数: {len(hand_dict)})")
+                print(f"[OK]  Redis  (key: {self.redis_key_hand_tracking}, : {len(hand_dict)})")
                 self._debug_success_printed = True
 
             return is_active, hand_dict
 
         except json.JSONDecodeError as e:
-            print(f"⚠️  JSON 解析错误: {e}")
+            print(f"[WARN]  JSON : {e}")
             return None, None
         except Exception as e:
-            print(f"⚠️  读取 Redis 数据错误: {e}")
+            print(f"[WARN]   Redis : {e}")
             import traceback
             traceback.print_exc()
             return None, None
 
     def run(self):
-        print(f"\n🚀 开始控制循环 (目标频率: {self.target_fps} Hz)")
-        print("按 Ctrl+C 退出\n")
+        print(f"\n[INFO]  (: {self.target_fps} Hz)")
+        print(" Ctrl+C \n")
 
         self._fps_start_time = None
         self._fps_data_frame_count = 0
@@ -650,7 +650,7 @@ class WujiHandRedisController:
                             pass
 
                     except Exception as e:
-                        print(f"⚠️  模式 {mode} 控制失败: {e}")
+                        print(f"[WARN]   {mode} : {e}")
 
                     elapsed = time.time() - loop_start
                     sleep_time = max(0, self.control_dt - elapsed)
@@ -676,10 +676,10 @@ class WujiHandRedisController:
                             if self._viz3d_ok is None:
                                 self._viz3d_ok = bool(ok3d)
                                 if not self._viz3d_ok:
-                                    print("⚠️  21D 3D 可视化初始化失败，已自动关闭。")
+                                    print("[WARN]  21D 3D ,.")
                                     self.viz_hand21d_3d = False
                             elif not ok3d:
-                                print("🛑  21D 3D 可视化已退出（窗口关闭或异常）。继续控制环。")
+                                print("[STOP]  21D 3D ()..")
                                 self.viz_hand21d_3d = False
 
                         if self.viz_hand21d:
@@ -696,10 +696,10 @@ class WujiHandRedisController:
                             if self._viz_ok is None:
                                 self._viz_ok = bool(ok)
                                 if not self._viz_ok:
-                                    print("⚠️  21D 可视化初始化失败，已自动关闭。")
+                                    print("[WARN]  21D ,.")
                                     self.viz_hand21d = False
                             elif not ok:
-                                print("🛑  21D 可视化已退出（q/ESC 或窗口异常）。继续控制环。")
+                                print("[STOP]  21D (q/ESC )..")
                                 self.viz_hand21d = False
 
                         # 3) apply mediapipe transformations (keep same as your pipeline)
@@ -742,17 +742,17 @@ class WujiHandRedisController:
                         if self._fps_data_frame_count >= self._fps_print_interval:
                             elapsed_time = time.time() - self._fps_start_time
                             actual_fps = self._fps_data_frame_count / max(elapsed_time, 1e-6)
-                            print(f"📊 实际数据帧率: {actual_fps:.2f} Hz (目标: {self.target_fps} Hz, 已处理 {self._fps_data_frame_count} 帧数据)")
+                            print(f"[INFO] : {actual_fps:.2f} Hz (: {self.target_fps} Hz,  {self._fps_data_frame_count} )")
                             self._fps_start_time = time.time()
                             self._fps_data_frame_count = 0
 
                     except Exception as e:
-                        print(f"⚠️  处理手部数据失败: {e}")
+                        print(f"[WARN]  : {e}")
                         import traceback
                         traceback.print_exc()
                 else:
                     if not self._has_received_data and self._frame_count == 0:
-                        print("⏳ 等待手部追踪数据...")
+                        print("[WAIT] ...")
                     self._frame_count += 1
 
                 elapsed = time.time() - loop_start
@@ -768,20 +768,20 @@ class WujiHandRedisController:
             return
         self._cleaned_up = True
 
-        print("\n🛑 正在关闭控制器并失能电机...")
+        print("\n[STOP] ...")
         try:
             if self._stop_requested_by_signal == signal.SIGTERM:
                 smooth_move(self.hand, self.controller, self.zero_pose, duration=0.2, steps=10)
             else:
                 smooth_move(self.hand, self.controller, self.zero_pose, duration=1.0, steps=50)
-            print("✅ 已回到零位")
+            print("[OK] ")
         except Exception:
             pass
 
         try:
             self.controller.close()
             self.hand.write_joint_enabled(False)
-            print("✅ 控制器已关闭")
+            print("[OK] ")
         except Exception:
             pass
 
@@ -796,7 +796,7 @@ class WujiHandRedisController:
         except Exception:
             pass
 
-        print("✅ 退出完成")
+        print("[OK] ")
 
 
 def parse_arguments():
@@ -842,12 +842,12 @@ def main():
     print("=" * 60)
     print("Wuji Hand Controller via Redis (Policy Inference)")
     print("=" * 60)
-    print(f"手部: {args.hand_side}")
+    print(f": {args.hand_side}")
     print(f"Redis IP: {args.redis_ip}")
-    print(f"目标频率: {args.target_fps} Hz")
-    print(f"平滑移动: {'禁用' if args.no_smooth else '启用'}")
+    print(f": {args.target_fps} Hz")
+    print(f": {'' if args.no_smooth else ''}")
     if not args.no_smooth:
-        print(f"平滑步数: {args.smooth_steps}")
+        print(f": {args.smooth_steps}")
     print(f"Policy: tag={args.policy_tag}, epoch={args.policy_epoch}")
     print(f"Safety: clamp=[{args.clamp_min},{args.clamp_max}], max_delta={args.max_delta_per_step}")
     print("=" * 60)

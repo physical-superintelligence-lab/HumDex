@@ -255,5 +255,5 @@ if __name__ == '__main__':
             mid = (dof_lower + dof_upper) / 2
             targets = mid.copy()
             k = steps // 60 % n_dof
-            targets[k] = dof_upper[k]  # 或 dof_lower[k]
+            targets[k] = dof_upper[k]  #  dof_lower[k]
             model.set_qpos_target(targets)

@@ -2480,9 +2480,9 @@ def main():
     replay_parser.add_argument('--toggle_send_key', type=str, default='k', help="Key to toggle send_enabled (default 'k')")
     replay_parser.add_argument('--hold_position_key', type=str, default='p', help="Key to toggle hold_position (default 'p')")
     replay_parser.add_argument('--toggle_ramp_seconds', type=float, default=0.0,
-                              help="k/p 切换时的平滑插值时长（秒，0 关闭）。插值曲线与 init_pose 一致。")
+                              help="Smooth interpolation duration for k/p mode toggles in seconds (0 disables). Uses the same easing behavior as init_pose.")
     replay_parser.add_argument('--toggle_ramp_ease', type=str, default='cosine', choices=['linear', 'cosine'],
-                              help="k/p 插值曲线（linear/cosine，默认 cosine）")
+                              help="Interpolation easing for k/p toggles (linear/cosine, default: cosine)")
 
     # Eval mode - run policy with dataset observations, visualize in sim
     eval_parser = subparsers.add_parser('eval', help='Evaluate policy with dataset observations')
@@ -2550,9 +2550,9 @@ def main():
     infer_parser.add_argument('--rgb_video_fps', type=float, default=0.0,
                               help='FPS for saved RGB video (default: use --frequency)')
     infer_parser.add_argument('--toggle_ramp_seconds', type=float, default=0.0,
-                              help="k/p 切换时的平滑插值时长（秒，0 关闭）。插值曲线与 init_pose 一致。")
+                              help="Smooth interpolation duration for k/p mode toggles in seconds (0 disables). Uses the same easing behavior as init_pose.")
     infer_parser.add_argument('--toggle_ramp_ease', type=str, default='cosine', choices=['linear', 'cosine'],
-                              help="k/p 插值曲线（linear/cosine，默认 cosine）")
+                              help="Interpolation easing for k/p toggles (linear/cosine, default: cosine)")
 
     # Init-pose mode - publish a fixed initial action from dataset until Ctrl-C
     init_parser = subparsers.add_parser('init_pose', help='Publish an initial dataset action to move robot to initial pose (hold)')

@@ -14,8 +14,8 @@ e = IPython.embed
 # =============================================================================
 # Dimension mapping for relative actions:
 # state_body (31D) maps to specific dimensions of action_body (35D):
-#   state_body[0:2]  ↔ action_body[3:5]   (roll, pitch)
-#   state_body[2:31] ↔ action_body[6:35]  (29 joint positions)
+#   state_body[0:2]   action_body[3:5]   (roll, pitch)
+#   state_body[2:31]  action_body[6:35]  (29 joint positions)
 # 
 # action_body dimensions NOT in state_body (kept absolute in relative mode):
 #   action_body[0:3]  - XY velocity, Z height
@@ -23,12 +23,12 @@ e = IPython.embed
 #
 # Hand actions fully match between state and action:
 #   Single hand mode (hand_side="left" or "right"):
-#     state_wuji_hand (20D) ↔ action_wuji_qpos_target (20D)
+#     state_wuji_hand (20D)  action_wuji_qpos_target (20D)
 #     action[35:55] relative to state_hand[0:20]
 #   
 #   Both hands mode (hand_side="both"):
-#     state_wuji_hand_left (20D) ↔ action_wuji_qpos_target_left (20D)
-#     state_wuji_hand_right (20D) ↔ action_wuji_qpos_target_right (20D)
+#     state_wuji_hand_left (20D)  action_wuji_qpos_target_left (20D)
+#     state_wuji_hand_right (20D)  action_wuji_qpos_target_right (20D)
 #     action[35:55] relative to state_hand_left[0:20]
 #     action[55:75] relative to state_hand_right[20:40]
 
@@ -321,7 +321,7 @@ class EpisodicDataset(torch.utils.data.Dataset):
                             except OSError as e:
                                 # h5py read failed (often: inflate() failed). Use black image to keep training running.
                                 if not self._warned_corrupt_image:
-                                    print(f"[dataset] ⚠️ corrupted image chunk detected; falling back to black image. err={e}")
+                                    print(f"[dataset] [WARN] corrupted image chunk detected; falling back to black image. err={e}")
                                     self._warned_corrupt_image = True
                                 hw3 = self._cached_head_hw3
                                 if hw3 is None:
@@ -887,7 +887,7 @@ def load_data(
             val_set = set(val_episode_ids)
             train_episode_ids = [ep for ep in episode_ids if ep not in val_set]
         else:
-            print("[load_data] ⚠️ val_robot_only requested but no robot dataset file matched (basename contains 'robot'). Using default val split.")
+            print("[load_data] [WARN] val_robot_only requested but no robot dataset file matched (basename contains 'robot'). Using default val split.")
     
     # optionally save split to json for reproducibility
     if split_save_path is not None:

@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-纯录制/数据处理脚本（不启动机器人/手控制）：
+Record-only data pipeline (no robot or hand hardware control):
 
-- 可选：后台启动 XDMocap -> Redis（复用 `xdmocap_teleop.sh`）
-- 主进程只负责：
-  - 本机直连 RealSense 采图
-  - 从 Redis 读取 state/action/hand_tracking 等 key
-  - 写入 EpisodeWriter
+- Optional: launch vdmocap->Redis in background via `vdmocap_teleop.sh`.
+- Main process responsibilities:
+  - Capture RealSense frames locally.
+  - Read state/action/hand-tracking keys from Redis.
+  - Write episodes with EpisodeWriter.
 
-键盘：
-- r: 开始/停止录制
-- q: 退出
+Keyboard:
+- r: start/stop recording
+- q: quit
 
-安全说明：
-- 为避免误操作，本脚本 **不会** 启动 sim2real/Wuji 控制；即便传入 `--start_sim2real/--start_wuji`
-  也会忽略并提示。
+Safety:
+- This script intentionally does not start sim2real or Wuji control.
+  Deprecated flags such as `--start_sim2real/--start_wuji` are ignored.
 """
 
 from __future__ import annotations
@@ -151,7 +151,7 @@ class SonicBodyZmqSource:
 # Optional: local Wuji retarget (no wuji_server required)
 # -----------------------------
 
-# 26维手部关节名称（与 teleop 写入 hand_tracking_* 的 key 一致）
+# 26D hand joint names aligned with teleop hand_tracking_* keys.
 HAND_JOINT_NAMES_26 = [
     "Wrist",
     "Palm",
@@ -181,11 +181,11 @@ HAND_JOINT_NAMES_26 = [
     "LittleTip",
 ]
 
-# 26维到21维 MediaPipe 格式的映射索引
-# MediaPipe 格式: [Wrist, Thumb(4), Index(4), Middle(4), Ring(4), Pinky(4)]
-# 26维格式: [Wrist, Palm, Thumb(4), Index(5), Middle(5), Ring(5), Pinky(5)]
+# Mapping indices from 26D hand format to MediaPipe 21D format.
+# MediaPipe format: [Wrist, Thumb(4), Index(4), Middle(4), Ring(4), Pinky(4)]
+# 26D format: [Wrist, Palm, Thumb(4), Index(5), Middle(5), Ring(5), Pinky(5)]
 MEDIAPIPE_MAPPING_26_TO_21 = [
-    1,  # 0: Wrist -> Wrist (这里使用 Palm 作为 Wrist，与 server_wuji_hand_redis.py 保持一致)
+    1,  # 0: Wrist -> Wrist (use Palm as Wrist to stay aligned with server_wuji_hand_redis.py)
     2,  # 1: ThumbMetacarpal -> Thumb CMC
     3,  # 2: ThumbProximal -> Thumb MCP
     4,  # 3: ThumbDistal -> Thumb IP
@@ -193,26 +193,27 @@ MEDIAPIPE_MAPPING_26_TO_21 = [
     6,  # 5: IndexMetacarpal -> Index MCP
     7,  # 6: IndexProximal -> Index PIP
     8,  # 7: IndexIntermediate -> Index DIP
-    10,  # 8: IndexTip -> Index Tip (跳过 IndexDistal)
+    10,  # 8: IndexTip -> Index Tip (skip IndexDistal)
     11,  # 9: MiddleMetacarpal -> Middle MCP
     12,  # 10: MiddleProximal -> Middle PIP
     13,  # 11: MiddleIntermediate -> Middle DIP
-    15,  # 12: MiddleTip -> Middle Tip (跳过 MiddleDistal)
+    15,  # 12: MiddleTip -> Middle Tip (skip MiddleDistal)
     16,  # 13: RingMetacarpal -> Ring MCP
     17,  # 14: RingProximal -> Ring PIP
     18,  # 15: RingIntermediate -> Ring DIP
-    20,  # 16: RingTip -> Ring Tip (跳过 RingDistal)
+    20,  # 16: RingTip -> Ring Tip (skip RingDistal)
     21,  # 17: LittleMetacarpal -> Pinky MCP
     22,  # 18: LittleProximal -> Pinky PIP
     23,  # 19: LittleIntermediate -> Pinky DIP
-    25,  # 20: LittleTip -> Pinky Tip (跳过 LittleDistal)
+    25,  # 20: LittleTip -> Pinky Tip (skip LittleDistal)
 ]
 
 
 def hand_26d_to_mediapipe_21d(hand_data_dict: Dict[str, Any], hand_side: str = "left") -> np.ndarray:
     """
-    将26维 hand_tracking dict 转换为21维 MediaPipe 格式 (21,3)。
-    注意：实现与 `deploy_real/server_wuji_hand_redis.py::hand_26d_to_mediapipe_21d` 对齐。
+    Convert a 26D hand_tracking dict into 21D MediaPipe coordinates (21, 3).
+    This implementation is aligned with
+    `deploy_real/server_wuji_hand_redis.py::hand_26d_to_mediapipe_21d`.
     """
     side = str(hand_side).lower()
     prefix = "LeftHand" if side == "left" else "RightHand"
@@ -229,7 +230,7 @@ def hand_26d_to_mediapipe_21d(hand_data_dict: Dict[str, Any], hand_side: str = "
     mp21 = joint_positions_26[np.asarray(MEDIAPIPE_MAPPING_26_TO_21, dtype=np.int32)]
     wrist_pos = mp21[0].copy()
     mp21 = mp21 - wrist_pos
-    # scale_factor=1.0 保持一致（这里不做额外放缩）
+    # Keep scale_factor=1.0 for consistency (no additional scaling here).
     return mp21
 
 
@@ -275,7 +276,7 @@ class RealSenseVisionSource:
         try:
             import pyrealsense2 as rs  # type: ignore
         except Exception as e:
-            raise ImportError("未安装 pyrealsense2，无法使用 --vision_backend realsense。") from e
+            raise ImportError("pyrealsense2 is required for --vision_backend realsense.") from e
 
         self._rs = rs
         self._enable_depth = bool(enable_depth)
@@ -321,7 +322,7 @@ def parse_args() -> argparse.Namespace:
     here = os.path.dirname(os.path.abspath(__file__))
     default_data_folder = os.path.join(here, "twist2_demonstration")
 
-    p = argparse.ArgumentParser(description="XDMocap/Redis + RealSense 录制器（record-only；不启动机器人/手控制）")
+    p = argparse.ArgumentParser(description="VDMocap/Redis + RealSense recorder (record-only, no robot/hand control)")
 
     # recording
     p.add_argument("--data_folder", default=default_data_folder)
@@ -333,37 +334,37 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--body_zmq_ip", default="127.0.0.1")
     p.add_argument("--body_zmq_port", type=int, default=5556)
     p.add_argument("--body_zmq_topic", default="pose")
-    p.add_argument("--no_window", action="store_true", help="不显示窗口（无窗口将无法按键控制录制）")
-    p.add_argument("--record_on_start", action="store_true", help="启动后立刻开始录制（适用于 --no_window）")
+    p.add_argument("--no_window", action="store_true", help="Disable preview window (keyboard control unavailable in no-window mode)")
+    p.add_argument("--record_on_start", action="store_true", help="Start recording immediately on launch (useful with --no_window)")
 
     # redis
     p.add_argument("--redis_ip", default="localhost")
     p.add_argument("--redis_port", type=int, default=6379)
 
     # local wuji retarget (record-only; does NOT control hardware)
-    p.add_argument("--local_wuji_retarget", type=int, default=1, help="是否在录制端本地计算 wuji qpos_target（0/1，默认1）")
+    p.add_argument("--local_wuji_retarget", type=int, default=1, help="Enable local wuji qpos target computation on recorder side (0/1, default=1)")
     p.add_argument(
         "--local_wuji_retarget_overwrite",
         type=int,
         default=1,
-        help="若 Redis 已有 action_wuji_qpos_target_*，是否用本地 retarget 覆盖（0/1，默认0）",
+        help="If Redis already has action_wuji_qpos_target_*, overwrite with local retarget output (0/1)",
     )
-    p.add_argument("--local_wuji_write_redis", type=int, default=1, help="把本地 retarget 结果写回 Redis（0/1，默认0）")
+    p.add_argument("--local_wuji_write_redis", type=int, default=1, help="Write local retarget output back to Redis (0/1)")
 
     # local wuji mode: DexPilot retarget (default) vs GeoRT model inference
-    p.add_argument("--local_wuji_use_model", type=int, default=0, help="本地 wuji 目标是否使用 GeoRT 模型推理（0/1，默认0=原 retarget）")
-    # 参数名对齐 deploy2.py / wuji_hand_model_deploy.sh（policy_tag/policy_epoch）
-    p.add_argument("--local_wuji_policy_tag", type=str, default="geort_filter_wuji", help="本地 GeoRT 模型 tag（--local_wuji_use_model=1）")
-    p.add_argument("--local_wuji_policy_epoch", type=int, default=-1, help="本地 GeoRT 模型 epoch（--local_wuji_use_model=1）")
-    p.add_argument("--local_wuji_policy_tag_left", type=str, default="", help="左手 tag（可选；空则用 local_wuji_policy_tag）")
-    p.add_argument("--local_wuji_policy_epoch_left", type=int, default=-999999, help="左手 epoch（可选；-999999 表示用 local_wuji_policy_epoch）")
-    p.add_argument("--local_wuji_policy_tag_right", type=str, default="", help="右手 tag（可选；空则用 local_wuji_policy_tag）")
-    p.add_argument("--local_wuji_policy_epoch_right", type=int, default=-999999, help="右手 epoch（可选；-999999 表示用 local_wuji_policy_epoch）")
-    p.add_argument("--local_wuji_use_fingertips5", type=int, default=1, help="model 输入用 5 指尖 (5,3)（0/1，默认1）")
-    # safety（主要给 model 模式，避免录制到异常抖动/越界）
-    p.add_argument("--local_wuji_clamp_min", type=float, default=-1.5, help="model 输出限幅最小值")
-    p.add_argument("--local_wuji_clamp_max", type=float, default=1.5, help="model 输出限幅最大值")
-    p.add_argument("--local_wuji_max_delta_per_step", type=float, default=0.08, help="model 输出每步最大变化")
+    p.add_argument("--local_wuji_use_model", type=int, default=0, help="Use GeoRT model inference for local wuji target generation (0/1, default=0)")
+    # Keep argument names aligned with deploy2.py / wuji_hand_model_deploy.sh.
+    p.add_argument("--local_wuji_policy_tag", type=str, default="geort_filter_wuji", help="Local GeoRT model tag (--local_wuji_use_model=1)")
+    p.add_argument("--local_wuji_policy_epoch", type=int, default=-1, help="Local GeoRT model epoch (--local_wuji_use_model=1)")
+    p.add_argument("--local_wuji_policy_tag_left", type=str, default="", help="Left-hand tag (optional; empty uses local_wuji_policy_tag)")
+    p.add_argument("--local_wuji_policy_epoch_left", type=int, default=-999999, help="Left-hand epoch (optional; -999999 uses local_wuji_policy_epoch)")
+    p.add_argument("--local_wuji_policy_tag_right", type=str, default="", help="Right-hand tag (optional; empty uses local_wuji_policy_tag)")
+    p.add_argument("--local_wuji_policy_epoch_right", type=int, default=-999999, help="Right-hand epoch (optional; -999999 uses local_wuji_policy_epoch)")
+    p.add_argument("--local_wuji_use_fingertips5", type=int, default=1, help="Use 5 fingertips (5,3) as model input (0/1, default=1)")
+    # Safety limits for model mode to avoid spikes/out-of-range outputs.
+    p.add_argument("--local_wuji_clamp_min", type=float, default=-1.5, help="Minimum clamp value for model output")
+    p.add_argument("--local_wuji_clamp_max", type=float, default=1.5, help="Maximum clamp value for model output")
+    p.add_argument("--local_wuji_max_delta_per_step", type=float, default=0.08, help="Maximum per-step output delta for model output")
 
     # vision (realsense only per requirement)
     p.add_argument("--rs_w", type=int, default=640)
@@ -372,7 +373,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--rs_depth", action="store_true")
 
     # vdmocap teleop (as subprocess). Keep old xdmocap flags as aliases.
-    p.add_argument("--start_vdmocap", "--start_xdmocap", dest="start_vdmocap", action="store_true", help="后台启动 vdmocap_teleop.sh")
+    p.add_argument("--start_vdmocap", "--start_xdmocap", dest="start_vdmocap", action="store_true", help="Start vdmocap_teleop.sh in background")
     p.add_argument(
         "--vdmocap_teleop_sh",
         "--xdmocap_teleop_sh",
@@ -386,16 +387,16 @@ def parse_args() -> argparse.Namespace:
         dest="vdmocap_extra_args",
         nargs=argparse.REMAINDER,
         default=[],
-        help="追加给 vdmocap_teleop.sh 的参数（放在 -- 之后）",
+        help="Additional arguments passed to vdmocap_teleop.sh (after --)",
     )
 
-    # 兼容旧参数：保留但本脚本不会启动机器人/手控制
-    p.add_argument("--start_sim2real", action="store_true", help="(deprecated/ignored) 仅保留兼容性，本脚本不会启动机器人控制")
+    # Deprecated compatibility args: kept but intentionally ignored.
+    p.add_argument("--start_sim2real", action="store_true", help="(deprecated/ignored) kept for compatibility; this script never starts robot control")
     p.add_argument("--policy", type=str, default=os.path.join(os.path.dirname(here), "assets/ckpts/twist2_1017_20k.onnx"))
     p.add_argument("--config", type=str, default="robot_control/configs/g1.yaml")
     p.add_argument("--device", type=str, default="cpu")
     p.add_argument("--net", type=str, default="eno1")
-    p.add_argument("--use_hand", action="store_true", help="是否启用 Unitree 夹爪手（Dex3_1_Controller）")
+    p.add_argument("--use_hand", action="store_true", help="Enable Unitree gripper hand (Dex3_1_Controller)")
     p.add_argument("--record_proprio", action="store_true")
     p.add_argument("--smooth_body", type=float, default=0.0)
     p.add_argument("--safety_rate_limit", action="store_true")
@@ -403,8 +404,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--max_dof_delta_per_step", type=float, default=1.0)
     p.add_argument("--max_dof_delta_print_every", type=int, default=200)
 
-    # 兼容旧参数：保留但本脚本不会启动机器人/手控制
-    p.add_argument("--start_wuji", action="store_true", help="(deprecated/ignored) 仅保留兼容性，本脚本不会启动 Wuji 手控制")
+    # Deprecated compatibility args: kept but intentionally ignored.
+    p.add_argument("--start_wuji", action="store_true", help="(deprecated/ignored) kept for compatibility; this script never starts Wuji hand control")
     p.add_argument("--wuji_hands", choices=["none", "left", "right", "both"], default="right")
     p.add_argument("--wuji_target_fps", type=int, default=50)
     p.add_argument("--wuji_no_smooth", action="store_true")
@@ -464,7 +465,7 @@ def main() -> int:
         pipe = client.pipeline()
         client.ping()
     except Exception as e:
-        print(f"❌ Redis 连接失败: {e}")
+        print(f"[ERROR] Redis connection failed: {e}")
         return 2
 
     # Start vdmocap teleop as background subprocess
@@ -472,7 +473,7 @@ def main() -> int:
     if bool(args.start_vdmocap):
         teleop_sh = os.path.abspath(str(args.vdmocap_teleop_sh))
         if not os.path.exists(teleop_sh):
-            print(f"❌ 找不到 vdmocap_teleop.sh: {teleop_sh}")
+            print(f"[ERROR] vdmocap_teleop.sh not found: {teleop_sh}")
             return 2
         cmd = ["bash", teleop_sh] + list(args.vdmocap_extra_args or [])
         print(f"[vdmocap] starting: {' '.join(cmd)}")
@@ -480,15 +481,15 @@ def main() -> int:
 
     # Safety: explicitly ignore controller-start flags (compatibility only)
     if bool(args.start_sim2real):
-        print("[WARN] --start_sim2real 已被忽略：本脚本是纯录制器，不会启动机器人控制。")
+        print("[WARN] --start_sim2real is ignored: this is a record-only script and never starts robot control.")
     if bool(args.start_wuji):
-        print("[WARN] --start_wuji 已被忽略：本脚本是纯录制器，不会启动 Wuji 手控制。")
+        print("[WARN] --start_wuji is ignored: this is a record-only script and never starts Wuji hand control.")
 
     # Vision (RealSense direct)
     try:
         vision = RealSenseVisionSource(width=int(args.rs_w), height=int(args.rs_h), fps=int(args.rs_fps), enable_depth=bool(args.rs_depth))
     except Exception as e:
-        print(f"❌ RealSense 初始化失败: {e}")
+        print(f"[ERROR] RealSense initialization failed: {e}")
         if xdm_proc is not None:
             try:
                 os.killpg(os.getpgid(xdm_proc.pid), signal.SIGTERM)
@@ -547,14 +548,14 @@ def main() -> int:
     print(f"- rs: {args.rs_w}x{args.rs_h}@{args.rs_fps} depth={bool(args.rs_depth)}")
     print(f"- start_vdmocap: {bool(args.start_vdmocap)}")
     print(f"- record_on_start: {bool(args.record_on_start)}")
-    print("Keys: r=start/stop, q=quit (注意：--no_window 时无法按键)")
+    print("Keys: r=start/stop, q=quit (note: keyboard control is unavailable with --no_window)")
     print("=" * 70)
 
     if bool(args.record_on_start):
         if recorder.create_episode():
             recording = True
             step_count = 0
-            print("✅ episode recording started (record_on_start)")
+            print("[OK] episode recording started (record_on_start)")
         else:
             recording = False
 
@@ -597,12 +598,12 @@ def main() -> int:
                     if recording:
                         if recorder.create_episode():
                             step_count = 0
-                            print("✅ episode recording started")
+                            print("[OK] episode recording started")
                         else:
                             recording = False
                     else:
                         recorder.save_episode()
-                        print("✅ episode saving triggered")
+                        print("[OK] episode saving triggered")
 
             if recording:
                 data: Dict[str, Any] = {"idx": step_count}
@@ -627,7 +628,7 @@ def main() -> int:
                                 break
                         data[dk] = safe_json_loads(raw)
                 except Exception as e:
-                    print(f"⚠️ Redis read error: {e}")
+                    print(f"[WARN] Redis read error: {e}")
                     continue
                 if body_zmq is not None:
                     zmq_packet = body_zmq.get_latest()
@@ -644,12 +645,12 @@ def main() -> int:
                         WujiHandRetargeter, apply_mediapipe_transformations = _try_import_wuji_retargeting()
                         if (WujiHandRetargeter is None or apply_mediapipe_transformations is None) and (not _warned_local_wuji):
                             _warned_local_wuji = True
-                            print("[WARN] 本地 wuji retarget 初始化失败（将跳过 action_wuji_qpos_target_* 计算）。")
+                            print("[WARN] Local wuji retarget initialization failed; action_wuji_qpos_target_* generation will be skipped.")
                     if bool(int(args.local_wuji_use_model)) and geort is None:
                         geort = _try_import_geort()
                         if geort is None and (not _warned_local_wuji):
                             _warned_local_wuji = True
-                            print("[WARN] 本地 wuji model 推理初始化失败（无法 import geort；将跳过 action_wuji_qpos_target_* 计算）。")
+                            print("[WARN] Local wuji model initialization failed (cannot import geort); action_wuji_qpos_target_* generation will be skipped.")
 
                     def _maybe_retarget_one(side: str) -> None:
                         nonlocal retargeter_left, retargeter_right, geort, model_left, model_right, last_wuji_left, last_wuji_right

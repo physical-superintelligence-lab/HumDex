@@ -4,7 +4,7 @@ from scipy.spatial.transform import Rotation as R
 
 
 def quatToEuler(quat):
-    """ 将四元数转换为欧拉角(roll, pitch, yaw)。 """
+    """Convert quaternion to Euler angles (roll, pitch, yaw)."""
     eulerVec = np.zeros(3)
     qw, qx, qy, qz = quat
     sinr_cosp = 2 * (qw * qx + qy * qz)
@@ -26,8 +26,8 @@ def quatToEuler(quat):
 
 def quat_rotate_inverse(q, v):
     """
-    将向量 v 以四元数 q 的逆旋转进行变换。  
-    为保持一致，以下代码与原脚本中的实现相同。
+    Rotate vector v by the inverse of quaternion q.
+    This implementation matches the original script for consistency.
     """
     q = np.asarray(q)
     v = np.asarray(v)

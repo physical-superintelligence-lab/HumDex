@@ -53,14 +53,14 @@ class Dex3_1_Controller:
         Unit_Test: Whether to enable unit testing
         """
         print("Initialize Dex3_1_Controller...")
-        print("🚀 Using new unified unitree_interface API")
+        print("[INFO] Using new unified unitree_interface API")
         
         # Create hand interfaces using new API
         self.left_hand = ui.HandInterface.create_left_hand(net, re_init)
         self.right_hand = ui.HandInterface.create_right_hand(net, False)  # Don't re-init for second hand
         
-        print(f"✅ {self.left_hand.get_hand_name()} initialized")
-        print(f"✅ {self.right_hand.get_hand_name()} initialized")
+        print(f"[OK] {self.left_hand.get_hand_name()} initialized")
+        print(f"[OK] {self.right_hand.get_hand_name()} initialized")
 
         # Arrays for additional hand states
         self.Ltemp = np.zeros((Dex3_Num_Motors, 2))
@@ -122,7 +122,7 @@ class Dex3_1_Controller:
     
     def initialize(self):
         # Use new unified API - send default poses
-        print("🔧 Initializing hands with default poses using new API...")
+        print(" Initializing hands with default poses using new API...")
         self.ctrl_dual_hand(DEFAULT_QPOS_LEFT, DEFAULT_QPOS_RIGHT)
  
 class Dex3_1_Left_JointIndex(IntEnum):
@@ -150,11 +150,11 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, default='eno1', help='Network interface used by G1RealWorldEnv.')
     args = parser.parse_args()
 
-    print("🧪 Testing Dex3_1_Controller with new unified API...")
+    print(" Testing Dex3_1_Controller with new unified API...")
     hand_ctrl = Dex3_1_Controller(args.net)
 
     # Simple test sequence
-    print("🎯 Running test sequence...")
+    print(" Running test sequence...")
     for i in range(10):
         # Test with small joint movements
         left_target = [0.01*i, 0, 0, 0, 0, 0, 0]
@@ -167,4 +167,4 @@ if __name__ == "__main__":
         print(f"Step {i}: Left [{left_hand_state[0]:.3f}, {left_hand_state[1]:.3f}, {left_hand_state[2]:.3f}] Right [{right_hand_state[0]:.3f}, {right_hand_state[1]:.3f}, {right_hand_state[2]:.3f}]")
         time.sleep(0.1)
     
-    print("✅ Test completed! New unified API is working perfectly.")
+    print("[OK] Test completed! New unified API is working perfectly.")

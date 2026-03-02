@@ -8,13 +8,13 @@ action_wuji_qpos_target_left/right.
 
 Dataset structure:
     dataset_folder/
-    ├── episode_0000/
-    │   ├── data.json
-    │   └── rgb/
-    ├── episode_0001/
-    │   ├── data.json
-    │   └── rgb/
-    └── ...
+     episode_0000/
+        data.json
+        rgb/
+     episode_0001/
+        data.json
+        rgb/
+     ...
 
 Usage:
     python batch_convert_hand_tracking.py --dataset_dir /path/to/dataset
@@ -217,14 +217,14 @@ def batch_process_dataset(
     episodes = find_episode_folders(dataset_dir, episode_pattern)
     
     if verbose:
-        print(f"📁 Dataset: {dataset_dir}")
-        print(f"📊 Found {len(episodes)} episodes")
+        print(f" Dataset: {dataset_dir}")
+        print(f"[INFO] Found {len(episodes)} episodes")
         if dry_run:
-            print("🔍 Dry run mode - no files will be modified")
+            print(" Dry run mode - no files will be modified")
         print()
     
     if len(episodes) == 0:
-        print("⚠️  No episodes found!")
+        print("[WARN]  No episodes found!")
         return {"total_episodes": 0}
     
     results = []
@@ -277,9 +277,9 @@ def batch_process_dataset(
         print("=" * 60)
         print(f"  Episodes processed: {successful}/{total_episodes}")
         if failed > 0:
-            print(f"  ❌ Failed: {failed}")
+            print(f"  [ERROR] Failed: {failed}")
         if no_data > 0:
-            print(f"  ⚠️  No data.json: {no_data}")
+            print(f"  [WARN]  No data.json: {no_data}")
         print(f"  Total frames: {total_frames}")
         print(f"  Left hand converted: {total_left}")
         print(f"  Right hand converted: {total_right}")
@@ -321,13 +321,13 @@ Examples:
 
 Dataset structure expected:
     dataset_dir/
-    ├── episode_0000/
-    │   ├── data.json
-    │   └── rgb/
-    ├── episode_0001/
-    │   ├── data.json
-    │   └── rgb/
-    └── ...
+     episode_0000/
+        data.json
+        rgb/
+     episode_0001/
+        data.json
+        rgb/
+     ...
         """
     )
     
@@ -373,7 +373,7 @@ def main():
     
     if verbose:
         print("=" * 60)
-        print("Batch Hand Tracking → Wuji Action Converter")
+        print("Batch Hand Tracking -> Wuji Action Converter")
         print("=" * 60)
     
     start_time = time.time()
@@ -390,7 +390,7 @@ def main():
     
     if verbose:
         print()
-        print(f"⏱️  Total time: {elapsed:.2f}s")
+        print(f"  Total time: {elapsed:.2f}s")
         if stats["total_episodes"] > 0:
             print(f"   Average per episode: {elapsed / stats['total_episodes']:.2f}s")
 

@@ -42,9 +42,9 @@ def main():
         import pyrealsense2 as rs  # type: ignore
     except Exception as e:
         raise SystemExit(
-            "❌ 未安装 pyrealsense2。\n"
-            "如果你要在 g1 本机直连 RealSense 发布 ZMQ，请先在 g1 上安装 pyrealsense2。\n"
-            "（若你改成用其它相机发布端，也必须保证输出格式与 VisionClient 匹配。）"
+            "[ERROR] pyrealsense2 is not installed.\n"
+            "If you publish RealSense ZMQ stream directly on g1, install pyrealsense2 first.\n"
+            "If you switch to another camera publisher, keep output format compatible with VisionClient."
         ) from e
 
     # ZMQ PUB
@@ -95,7 +95,7 @@ def main():
             header = struct.pack("iii", int(w), int(h), int(len(jpeg_bytes)))
             msg = header + jpeg_bytes
 
-            # PUB：无订阅者时 send 也会成功（消息会被丢弃），这是预期行为
+            # PUB send succeeds even without subscribers; dropped messages are expected.
             sock.send(msg)
 
             frame_idx += 1
@@ -107,7 +107,7 @@ def main():
                 print(f"[ZMQ PUB] frames={frame_idx}  fps={fps:.1f}  jpeg={len(jpeg_bytes)/1024:.1f}KB  ~{mbps:.1f}MB/s")
 
     except KeyboardInterrupt:
-        print("\n🛑 Interrupted, shutting down...")
+        print("\n[STOP] Interrupted, shutting down...")
     finally:
         try:
             pipeline.stop()

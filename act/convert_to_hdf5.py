@@ -414,9 +414,9 @@ def verify_conversion(dataset_dir, hdf5_path, episode_idx=0, state_body_31d=Fals
                 image_hdf5 = hdf5_episode['head'][ts_idx]
                 assert np.array_equal(image_original, image_hdf5), f"Head camera image mismatch at timestep {ts_idx}"
 
-        print(f"  ✓ Verified {len(test_indices)} random timesteps - all match!")
+        print(f"   Verified {len(test_indices)} random timesteps - all match!")
 
-    print("  ✓ Verification passed!")
+    print("   Verification passed!")
 
 
 if __name__ == '__main__':
@@ -465,4 +465,4 @@ if __name__ == '__main__':
             verify_conversion(first_dir, args.output, episode_idx=0, 
                             state_body_31d=args.state_body_31d, 
                             image_format=args.image_format)
-        print("\n✓ All verification checks passed!")
+        print("\n All verification checks passed!")

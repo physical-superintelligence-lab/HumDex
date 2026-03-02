@@ -9,9 +9,9 @@ This script processes episode data to align states with previous actions:
 - Reindex images accordingly
 
 State-Action pairs processed:
-- state_body ← action_body (extracted to 31D: [3:5] + [6:35])
-- state_wuji_hand_left ← action_wuji_qpos_target_left (20D)
-- state_wuji_hand_right ← action_wuji_qpos_target_right (20D)
+- state_body  action_body (extracted to 31D: [3:5] + [6:35])
+- state_wuji_hand_left  action_wuji_qpos_target_left (20D)
+- state_wuji_hand_right  action_wuji_qpos_target_right (20D)
 
 For state_body, we extract 31 dimensions from action_body:
 - action_body[3:5] = roll, pitch (2D)
@@ -270,16 +270,16 @@ def batch_process_dataset(
     episodes = find_episode_folders(dataset_dir, episode_pattern)
     
     if verbose:
-        print(f"📁 Dataset: {dataset_dir}")
-        print(f"📊 Found {len(episodes)} episodes")
+        print(f" Dataset: {dataset_dir}")
+        print(f"[INFO] Found {len(episodes)} episodes")
         if dry_run:
-            print("🔍 Dry run mode - no files will be modified")
+            print(" Dry run mode - no files will be modified")
         if backup and not dry_run:
-            print("💾 Backup enabled - will create data_original.json and rgb_original/")
+            print(" Backup enabled - will create data_original.json and rgb_original/")
         print()
     
     if len(episodes) == 0:
-        print("⚠️  No episodes found!")
+        print("[WARN]  No episodes found!")
         return {"total_episodes": 0}
     
     results = []
@@ -319,20 +319,20 @@ def batch_process_dataset(
         print("=" * 60)
         print(f"  Episodes processed: {successful}/{total_episodes}")
         if failed > 0:
-            print(f"  ❌ Failed: {failed}")
+            print(f"  [ERROR] Failed: {failed}")
         if too_few > 0:
-            print(f"  ⚠️  Too few frames: {too_few}")
+            print(f"  [WARN]  Too few frames: {too_few}")
         if no_data > 0:
-            print(f"  ⚠️  No data.json: {no_data}")
+            print(f"  [WARN]  No data.json: {no_data}")
         print()
         print(f"  Original frames: {total_original_frames}")
         print(f"  New frames: {total_new_frames}")
         print(f"  Dropped frames: {total_dropped} (first + last per episode)")
         print()
         print("  Transformations applied:")
-        print("    - state_body ← action_body[3:5] + action_body[6:35] (31D)")
-        print("    - state_wuji_hand_left ← action_wuji_qpos_target_left (20D)")
-        print("    - state_wuji_hand_right ← action_wuji_qpos_target_right (20D)")
+        print("    - state_body  action_body[3:5] + action_body[6:35] (31D)")
+        print("    - state_wuji_hand_left  action_wuji_qpos_target_left (20D)")
+        print("    - state_wuji_hand_right  action_wuji_qpos_target_right (20D)")
         print("    - action_body stays original (35D)")
         print("    - action_wuji_qpos_target_* stays original (20D)")
         
@@ -366,7 +366,7 @@ Transformation logic:
       action[i] = action[i+1]  (action from original frame i+1)
 
 Dimension changes:
-  - state_body: 34D → 31D (from action_body[3:5] + [6:35])
+  - state_body: 34D -> 31D (from action_body[3:5] + [6:35])
   - action_body: stays 35D (unchanged)
 
 Examples:
@@ -437,8 +437,8 @@ def main():
         print("=" * 60)
         print()
         print("This will:")
-        print("  1. Backup data.json → data_original.json" if not args.no_backup else "  1. (Backup disabled)")
-        print("  2. Backup rgb/ → rgb_original/" if not args.no_backup else "  2. (Backup disabled)")
+        print("  1. Backup data.json -> data_original.json" if not args.no_backup else "  1. (Backup disabled)")
+        print("  2. Backup rgb/ -> rgb_original/" if not args.no_backup else "  2. (Backup disabled)")
         print("  3. Drop first and last frame from each episode")
         print("  4. Set state[i] = action[i-1] (shifted, state_body becomes 31D)")
         print("  5. Keep action as original dimensions (action_body stays 35D)")
@@ -463,7 +463,7 @@ def main():
     
     if verbose:
         print()
-        print(f"⏱️  Total time: {elapsed:.2f}s")
+        print(f"  Total time: {elapsed:.2f}s")
         total_eps = sum(int(s.get("total_episodes", 0)) for s in all_stats)
         if total_eps > 0:
             print(f"   Average per episode: {elapsed / total_eps:.2f}s")

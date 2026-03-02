@@ -735,7 +735,7 @@ def visualize_predictions(data, a_hat, norm_stats, body_viz, hand_viz, ckpt_dir,
                 hand_right_pred_frames = hand_viz_right.visualize(hand_right_pred, verbose=False)
             else:
                 # Fallback: use left hand visualizer for both (will look wrong but won't crash)
-                print("⚠️ Warning: hand_viz_right not provided, using left hand visualizer for right hand")
+                print("[WARN] Warning: hand_viz_right not provided, using left hand visualizer for right hand")
                 hand_right_gt_frames = hand_viz.visualize(hand_right_gt, verbose=False)
                 hand_right_pred_frames = hand_viz.visualize(hand_right_pred, verbose=False)
         else:
@@ -824,10 +824,10 @@ def visualize_predictions(data, a_hat, norm_stats, body_viz, hand_viz, ckpt_dir,
             return video_path
         except Exception as e:
             # Do NOT fallback to building a huge frame list (can OOM). Skip visualization instead.
-            print(f"⚠️ Visualization stream writer failed ({split}, epoch={epoch}): {e}")
+            print(f"[WARN] Visualization stream writer failed ({split}, epoch={epoch}): {e}")
             return None
     except Exception as e:
-        print(f"⚠️ Visualization video save failed ({split}, epoch={epoch}): {e}")
+        print(f"[WARN] Visualization video save failed ({split}, epoch={epoch}): {e}")
         return None
 
 

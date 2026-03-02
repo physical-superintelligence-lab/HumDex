@@ -20,7 +20,7 @@ cd "${REPO_ROOT}"
 TWIST2_ENV_PREFIX="${TWIST2_ENV_PREFIX:-/home/heng/miniconda3/envs/twist2}"
 PYTHON_BIN="${TWIST2_PYTHON:-${TWIST2_ENV_PREFIX}/bin/python}"
 if [[ ! -x "${PYTHON_BIN}" ]]; then
-  echo "❌ Could not find Python at: ${PYTHON_BIN}"
+  echo "[ERROR] Could not find Python at: ${PYTHON_BIN}"
   echo "   - Set TWIST2_PYTHON=/path/to/python or TWIST2_ENV_PREFIX=/path/to/env"
   exit 1
 fi

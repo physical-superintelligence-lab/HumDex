@@ -8,12 +8,12 @@ and saves the results as action_wuji_qpos_target_left/right.
 
 Pipeline:
     hand_tracking_* (26D dict with 3D positions)
-        ↓ hand_26d_to_mediapipe_21d()
-    21×3 MediaPipe format
-        ↓ apply_mediapipe_transformations()
-    21×3 transformed coordinates
-        ↓ WujiHandRetargeter.retarget()
-    20D Wuji hand joint positions (5 fingers × 4 joints)
+         hand_26d_to_mediapipe_21d()
+    21x3 MediaPipe format
+         apply_mediapipe_transformations()
+    21x3 transformed coordinates
+         WujiHandRetargeter.retarget()
+    20D Wuji hand joint positions (5 fingers x 4 joints)
 
 Usage:
     python convert_hand_tracking_to_wuji_action.py --input path/to/data.json --output path/to/output.json
@@ -39,7 +39,7 @@ try:
     from wuji_retargeting import WujiHandRetargeter
     from wuji_retargeting.mediapipe import apply_mediapipe_transformations
 except ImportError as e:
-    print(f"❌ Error importing wuji_retargeting: {e}")
+    print(f"[ERROR] Error importing wuji_retargeting: {e}")
     print("   Please ensure wuji_retargeting is properly installed")
     sys.exit(1)
 
@@ -57,7 +57,7 @@ HAND_JOINT_NAMES_26 = [
     "LittleMetacarpal", "LittleProximal", "LittleIntermediate", "LittleDistal", "LittleTip"
 ]
 
-# 26D → 21D MediaPipe mapping
+# 26D -> 21D MediaPipe mapping
 # MediaPipe format: [Wrist, Thumb(4), Index(4), Middle(4), Ring(4), Pinky(4)]
 # Skip: Palm, IndexDistal, MiddleDistal, RingDistal, LittleDistal
 MEDIAPIPE_MAPPING_26_TO_21 = [
@@ -153,7 +153,7 @@ def convert_hand_tracking_to_wuji_action(
         return None
     
     try:
-        # Step 1: 26D dict → 21×3 MediaPipe format
+        # Step 1: 26D dict -> 21x3 MediaPipe format
         mediapipe_21d = hand_26d_to_mediapipe_21d(hand_dict, hand_side)
         
         # Step 2: Apply coordinate transformations
@@ -166,7 +166,7 @@ def convert_hand_tracking_to_wuji_action(
         return wuji_20d
         
     except Exception as e:
-        print(f"⚠️  Error converting {hand_side} hand: {e}")
+        print(f"[WARN]  Error converting {hand_side} hand: {e}")
         return None
 
 
@@ -196,7 +196,7 @@ def process_json_file(
         raise FileNotFoundError(f"Input file not found: {input_path}")
     
     if verbose:
-        print(f"📂 Loading: {input_path}")
+        print(f" Loading: {input_path}")
     
     # Load JSON
     with open(input_path, "r", encoding="utf-8") as f:
@@ -210,8 +210,8 @@ def process_json_file(
     total_frames = len(frames)
     
     if verbose:
-        print(f"📊 Total frames: {total_frames}")
-        print(f"🔧 Initializing retargeters...")
+        print(f"[INFO] Total frames: {total_frames}")
+        print(f" Initializing retargeters...")
     
     # Initialize retargeters (once for all frames)
     left_retargeter = WujiHandRetargeter(hand_side="left")
@@ -221,7 +221,7 @@ def process_json_file(
     right_converted = 0
     
     if verbose:
-        print(f"🔄 Converting hand tracking to Wuji actions...")
+        print(f"[INFO] Converting hand tracking to Wuji actions...")
     
     iterator = tqdm(frames, desc="Converting") if verbose else frames
     
@@ -256,13 +256,13 @@ def process_json_file(
     
     # Save output
     if verbose:
-        print(f"💾 Saving to: {output_path}")
+        print(f" Saving to: {output_path}")
     
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
     
     if verbose:
-        print(f"✅ Done!")
+        print(f"[OK] Done!")
         print(f"   - Left hand converted: {left_converted}/{total_frames} frames")
         print(f"   - Right hand converted: {right_converted}/{total_frames} frames")
     
@@ -295,7 +295,7 @@ def process_directory(
     json_files = list(input_dir.glob(pattern))
     
     if verbose:
-        print(f"📁 Found {len(json_files)} JSON files in {input_dir}")
+        print(f" Found {len(json_files)} JSON files in {input_dir}")
     
     results = {}
     for json_file in json_files:
@@ -308,7 +308,7 @@ def process_directory(
             stats = process_json_file(str(json_file), str(out_file) if out_file else None, verbose)
             results[json_file.name] = stats
         except Exception as e:
-            print(f"❌ Error processing {json_file.name}: {e}")
+            print(f"[ERROR] Error processing {json_file.name}: {e}")
             results[json_file.name] = (0, 0, 0)
     
     return results
@@ -335,8 +335,8 @@ Examples:
 
 Output format:
   Each frame will have two new fields:
-    - action_wuji_qpos_target_left: 20D array (5 fingers × 4 joints) or null
-    - action_wuji_qpos_target_right: 20D array (5 fingers × 4 joints) or null
+    - action_wuji_qpos_target_left: 20D array (5 fingers x 4 joints) or null
+    - action_wuji_qpos_target_right: 20D array (5 fingers x 4 joints) or null
         """
     )
     
@@ -388,7 +388,7 @@ def main():
     verbose = not args.quiet
     
     print("=" * 60)
-    print("Hand Tracking → Wuji Action Converter")
+    print("Hand Tracking -> Wuji Action Converter")
     print("=" * 60)
     
     if args.input:
