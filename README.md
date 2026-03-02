@@ -2,22 +2,15 @@
 By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
 
 
-Current scope:
-- Installation
-- Unified teleop entry
-- sim2sim / sim2real quick start
-- wuji hand quick start
-
 ---
 
 ## Content Table
 
 - [Installation](#installation)
 - [Teleop](#teleop)
-- [Sim2Sim and Sim2Real](#sim2sim-and-sim2real)
-- [Wuji Hand](#wuji-hand)
+- [G1 Controller](#g1-controller)
+- [Wuji Hand Controller](#wuji-hand-controller)
 - [Camera and Data Collection](#camera-and-data-collection)
-- [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -25,19 +18,7 @@ Current scope:
 
 We will have two conda environments for Humdex. One is called `humdex`, which can be used for controller training, controller deployment, and teleop data collection. The other is called `gmr`, which can be used for online motion retargeting.
 
-### 1) Clone `GR00T-WholeBodyControl` (for sonic)
-
-```bash
-cd ..
-git clone https://github.com/NVlabs/GR00T-WholeBodyControl.git
-cd GR00T-WholeBodyControl
-git lfs pull
-```
-
-Then follow the official [doc](https://nvlabs.github.io/GR00T-WholeBodyControl/) to install its environment.
-
-
-### 2) Create `gmr` Environment
+### 1) Create `gmr` Environment
 
 ```bash
 conda create -n gmr python=3.10 -y
@@ -55,7 +36,7 @@ pip install python-osc
 conda install -c conda-forge libstdcxx-ng -y
 ```
 
-### 3) Create `humdex` Environment
+### 2) Create `humdex` Environment
 ```bash
 conda create -n humdex python=3.8 -y
 conda activate humdex
@@ -73,13 +54,22 @@ For the rest of `humdex` environment setup, follow TWIST2 README:
 - [Step 3: Install Packages](https://github.com/LiangHeng121/TWIST2?tab=readme-ov-file#step-3-install-packages)
 - [Step 4: Install Unitree SDK2 for Laptop Sim2Real](https://github.com/LiangHeng121/TWIST2?tab=readme-ov-file#step-4-install-unitree-sdk2-for-laptop-sim2real)
 
+### 3) Clone `GR00T-WholeBodyControl` (for sonic)
+
+```bash
+cd ..
+git clone https://github.com/NVlabs/GR00T-WholeBodyControl.git
+cd GR00T-WholeBodyControl
+git lfs pull
+```
+
+Then follow the official [doc](https://nvlabs.github.io/GR00T-WholeBodyControl/) to install its environment.
+
 ---
 
 ## Teleop
 
 ### 1) Unified Entry
-
-Use root entry:
 
 ```bash
 conda activate gmr
@@ -92,7 +82,6 @@ Supported selectors:
 - `--policy {twist2|sonic}` (default `twist2`)
 - `--body {vdmocap|slimevr}` (default `vdmocap`)
 - `--hand {vdhand|manus}` (default `vdhand`)
-
 
 Execution mode:
 
