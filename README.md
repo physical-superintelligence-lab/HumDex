@@ -1,6 +1,7 @@
 # HumDex: Humanoid Dexterous Manipulation Made Easy
 By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
 
+![Banner for TWIST](./assets/HumDex.png)
 
 ## Content Table
 
