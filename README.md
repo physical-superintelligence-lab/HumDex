@@ -9,7 +9,7 @@ By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
 - [Teleop](#teleop)
 - [G1 Controller](#g1-controller)
 - [Wuji Hand Controller](#wuji-hand-controller)
-- [Camera and Data Collection](#camera-and-data-collection)
+- [Data Collection](#data-collection)
 
 ---
 
@@ -171,7 +171,6 @@ bash deploy.sh real --input-type zmq
 
 ```bash
 conda activate humdex
-
 bash wuji_hand_sim.sh
 ```
 
@@ -179,13 +178,12 @@ bash wuji_hand_sim.sh
 
 ```bash
 conda activate humdex
-
 bash wuji_hand_real.sh
 ```
 
 ---
 
-## Camera and Data Collection
+## Data Collection
 
 ### 1) Start Camera Stream on g1
 
