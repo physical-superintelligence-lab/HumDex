@@ -1,5 +1,0 @@
----
-alwaysApply: true
----
-
-send_hand_tracking_data_to_redis

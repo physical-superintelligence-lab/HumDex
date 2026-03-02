@@ -33,8 +33,8 @@ python server_data_record.py \
   --vision_ip "${vision_ip}" \
   --vision_port "${vision_port}" \
   --save_episode_video \
-  --keyboard_backend evdev \
-  --evdev_device /dev/input/by-id/usb-PCsensor_FootSwitch-event-kbd \
-  "$@"
+  # --keyboard_backend evdev \
+  # --evdev_device /dev/input/by-id/usb-PCsensor_FootSwitch-event-kbd \
+  # "$@"
 
 
