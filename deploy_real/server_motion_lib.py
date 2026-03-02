@@ -242,7 +242,7 @@ def main(args, xml_file, robot_base):
     
       
     except Exception as e:
-        print(f"[Motion Server] Error: {e}")
+        print(f"[Motion Server] [ERROR] {e}")
         print("[Motion Server] Keyboard interrupt. Interpolating to default mimic_obs...")
         # do linear interpolation to the last mimic_obs
         time_back_to_default = 2.0

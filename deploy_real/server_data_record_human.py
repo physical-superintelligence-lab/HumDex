@@ -465,7 +465,7 @@ def main() -> int:
         pipe = client.pipeline()
         client.ping()
     except Exception as e:
-        print(f"[ERROR] Redis connection failed: {e}")
+        print(f"[ERROR] Failed to connect to Redis: {e}")
         return 2
 
     # Start vdmocap teleop as background subprocess

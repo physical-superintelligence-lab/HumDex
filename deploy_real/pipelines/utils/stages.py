@@ -59,7 +59,7 @@ def normalize_keyboard_backend(cfg: Any, policy: str) -> None:
     allowed_kb_backends = {"none", "stdin", "evdev", "both"}
     if cfg.keyboard_backend not in allowed_kb_backends:
         print(
-            f"[{policy}_pipeline] invalid keyboard_backend="
+            f"[{policy}_pipeline] [WARN] Invalid keyboard_backend="
             f"{cfg.keyboard_backend}, fallback to none"
         )
         cfg.keyboard_backend = "none"

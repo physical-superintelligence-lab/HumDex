@@ -388,7 +388,7 @@ def main():
         redis_client.ping()
         print(f"[OK] Connected to Redis at {args.redis_ip}:{args.redis_port}, DB=0")
     except Exception as e:
-        print(f"[ERROR] Error connecting to Redis: {e}")
+        print(f"[ERROR] Failed to connect to Redis: {e}")
         return
 
     # Vision source

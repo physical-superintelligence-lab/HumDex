@@ -32,7 +32,7 @@ def quat_rotate_inverse(q, v):
     q = np.asarray(q)
     v = np.asarray(v)
 
-    q_w = q[:, -1]      # w
+    q_w = q[:, -1]      # quaternion w (scalar) component
     q_vec = q[:, :3]    # x, y, z
 
     a = v * (2.0 * q_w**2 - 1.0)[:, np.newaxis]

@@ -580,7 +580,7 @@ class WujiHandRedisController:
         self.smooth_steps = smooth_steps
         self.serial_number = (serial_number or "").strip()
 
-        # mode
+        # Mode: GeoRT model vs DexPilot retarget
         self.use_model = bool(use_model)
         self.model_tag = str(model_tag)
         self.model_epoch = int(model_epoch)

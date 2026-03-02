@@ -3,7 +3,7 @@ import time
 import unitree_interface
 from rich import print
 
-ContollerMapping ={
+ControllerMapping = {
     "A": 0x0100,
     "B": 0x0200,
     "X": 0x0400,
@@ -65,7 +65,7 @@ class G1RealWorldEnv:
         print(f"Current robot state: {self.low_state}")
         print("[green]Successfully connected to the robot[/green]")
 
-        self.controller_mapping = ContollerMapping
+        self.controller_mapping = ControllerMapping
        
     
     def read_robot_state(self) -> unitree_interface.LowState:

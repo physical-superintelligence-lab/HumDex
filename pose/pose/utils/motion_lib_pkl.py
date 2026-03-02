@@ -94,7 +94,7 @@ class MotionLib:
                 with open(curr_file, "rb") as f:
                     motion_data = pickle.load(f)
             except Exception as e:
-                print(f"Error loading motion file {curr_file}: {e}")
+                print(f"[ERROR] Failed to load motion file {curr_file}: {e}")
                 continue
             fps = motion_data["fps"]
             curr_weight = motion_weights[i]
@@ -117,7 +117,7 @@ class MotionLib:
             try:
                 self._add_motions(root_pos, root_rot, dof_pos, local_body_pos, fps, curr_weight, curr_file)
             except Exception as e:
-                print(f"Error adding motion {curr_file}: {e}")
+                print(f"[ERROR] Failed to add motion {curr_file}: {e}")
                 continue
             
             

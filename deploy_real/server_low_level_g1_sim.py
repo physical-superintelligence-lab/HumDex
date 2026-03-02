@@ -73,7 +73,7 @@ class RealTimePolicyController:
             self.redis_client = redis.Redis(host='localhost', port=6379, db=0)
             self.redis_pipeline = self.redis_client.pipeline()
         except Exception as e:
-            print(f"Error connecting to Redis: {e}")
+            print(f"[ERROR] Failed to connect to Redis: {e}")
 
         self.device = device
         self.policy = load_onnx_policy(policy_path, device)
@@ -375,7 +375,7 @@ class RealTimePolicyController:
 
                     
         except Exception as e:
-            print(f"Error in run: {e}")
+            print(f"[ERROR] Run error: {e}")
             import traceback
             traceback.print_exc()
         finally:
@@ -415,12 +415,12 @@ def main():
     
     # Verify policy file exists
     if not os.path.exists(args.policy):
-        print(f"Error: Policy file {args.policy} does not exist")
+        print(f"[ERROR] Policy file {args.policy} does not exist")
         return
     
     # Verify XML file exists
     if not os.path.exists(args.xml):
-        print(f"Error: XML file {args.xml} does not exist")
+        print(f"[ERROR] XML file {args.xml} does not exist")
         return
     
     print(f"Starting TWIST2 simulation controller...")

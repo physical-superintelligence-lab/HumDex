@@ -229,7 +229,7 @@ class VisionClient:
                     
                     if actual_jpeg_size != jpeg_length:
                         if verbose:
-                            print(f"[Warning] JPEG size mismatch: expected {jpeg_length}, got {actual_jpeg_size}")
+                            print(f"[WARN] JPEG size mismatch: expected {jpeg_length}, got {actual_jpeg_size}")
                         continue
                     
                     # Extract and decode JPEG payload.
@@ -241,18 +241,18 @@ class VisionClient:
                         
                         if image is None:
                             if verbose:
-                                print("[Warning] Failed to decode JPEG image")
+                                print("[WARN] Failed to decode JPEG image")
                             continue
                             
                         # Validate decoded image size.
                         if image.shape[0] != height or image.shape[1] != width:
                             if verbose:
-                                print(f"[Warning] Decoded image size {image.shape} doesn't match expected {height}x{width}")
+                                print(f"[WARN] Decoded image size {image.shape} doesn't match expected {height}x{width}")
                             # Continue anyway since JPEG decoding can introduce slight size differences.
                         
                     except Exception as e:
                         if verbose:
-                            print(f"[Warning] JPEG decode error: {e}")
+                            print(f"[WARN] JPEG decode error: {e}")
                         continue
                     
                     # # Check what data we have
@@ -285,7 +285,7 @@ class VisionClient:
         except KeyboardInterrupt:
             print("[VisionClient] Interrupted by user.")
         except Exception as e:
-            print(f"[VisionClient] Error: {e}")
+            print(f"[VisionClient] [ERROR] {e}")
         finally:
             self._close()
 
@@ -339,7 +339,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("[VisionClient] Interrupted by user.")
     except Exception as e:
-        print(f"[VisionClient] Error: {e}")
+        print(f"[VisionClient] [ERROR] {e}")
     finally:
         # Clean up shared memory
         image_shared_memory.unlink()

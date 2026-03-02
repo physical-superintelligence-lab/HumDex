@@ -128,7 +128,7 @@ class EpisodeWriter():
                 try:
                     self._process_item_data(item_data)
                 except Exception as e:
-                    print(f"[EpisodeWriter] [WARN] Error processing item_data (idx={item_data['idx']}): {e}")
+                    print(f"[EpisodeWriter] [WARN] Failed to process item_data (idx={item_data['idx']}): {e}")
                 self.item_data_queue.task_done()
             except Empty:
                 pass

@@ -111,7 +111,7 @@ class RealTimePolicyController(object):
             self.redis_client = redis.Redis(host='localhost', port=6379, db=0)
             self.redis_pipeline = self.redis_client.pipeline()
         except Exception as e:
-            print(f"Error connecting to Redis: {e}")
+            print(f"[ERROR] Failed to connect to Redis: {e}")
             exit()
        
         self.config = Config(config_path)
@@ -338,7 +338,7 @@ class RealTimePolicyController(object):
                 
 
         except Exception as e:
-            print(f"Error in main loop: {e}")
+            print(f"[ERROR] Main loop error: {e}")
             import traceback
             traceback.print_exc()
         finally:
@@ -385,11 +385,11 @@ def main():
     
     # Validate required file paths.
     if not os.path.exists(args.policy):
-        print(f"Error: Policy file {args.policy} does not exist")
+        print(f"[ERROR] Policy file {args.policy} does not exist")
         return
     
     if not os.path.exists(args.config):
-        print(f"Error: Config file {args.config} does not exist")
+        print(f"[ERROR] Config file {args.config} does not exist")
         return
     
     print(f"Starting TWIST2 real robot controller...")

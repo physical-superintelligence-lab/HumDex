@@ -9,7 +9,7 @@ if platform.system() == "Windows":
     SDK_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                             'VDMocapSDK_DataRead.dll')
 else:
-    #  Demo  .so  Ubuntu 22.04 x64 , Ubuntu 20.04  arm64  .so  
+    # Linux: .so built for Ubuntu 22.04 x64 or Ubuntu 20.04 arm64
     SDK_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                             'libVDMocapSDK_DataRead.so')
 DATAREAD = CDLL(SDK_PATH)

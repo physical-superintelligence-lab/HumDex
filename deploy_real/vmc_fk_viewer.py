@@ -632,7 +632,7 @@ def main():
             fig.savefig(init_out)
             print(f"[Viewer] saved {init_out}", flush=True)
         except Exception as e:
-            print(f"[Viewer] save failed: {e}", flush=True)
+            print(f"[Viewer] [WARN] Save failed: {e}", flush=True)
     
     print("FK Viewer Started. Waiting for rotation data...")
 
@@ -695,7 +695,7 @@ def main():
                             fig.savefig(out)
                             print(f"[Viewer] saved {out}", flush=True)
                         except Exception as e:
-                            print(f"[Viewer] save failed: {e}", flush=True)
+                            print(f"[Viewer] [WARN] Save failed: {e}", flush=True)
                 frame_idx += 1
                 if bool(args.headless):
                     time.sleep(0.01)
@@ -790,7 +790,7 @@ def main():
                         fig.savefig(out)
                         print(f"[Viewer] saved {out}", flush=True)
                     except Exception as e:
-                        print(f"[Viewer] save failed: {e}", flush=True)
+                        print(f"[Viewer] [WARN] Save failed: {e}", flush=True)
             frame_idx += 1
             if bool(args.headless):
                 time.sleep(0.01)

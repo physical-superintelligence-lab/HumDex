@@ -382,7 +382,7 @@ def default_parent_map_body() -> Dict[str, Optional[str]]:
     p["Spine3"] = "Spine2"
     p["Neck"] = "Spine3"
     p["Head"] = "Neck"
-    # arms
+    # Arm chain
     p["RightShoulder"] = "Spine3"
     p["RightUpperArm"] = "RightShoulder"
     p["RightLowerArm"] = "RightUpperArm"
@@ -670,7 +670,7 @@ def synthesize_gmr_body_quats_from_positions(frame: Dict[str, Any]) -> Dict[str,
     if has("Spine2") and has("Hips"):
         set_quat_from_dir("Spine2", "Hips", up_hint)  # fallback, still defines a basis
 
-    # legs
+    # Leg chain
     set_quat_from_dir("LeftUpLeg", "LeftLeg", up_hint)
     set_quat_from_dir("LeftLeg", "LeftFoot", up_hint)
     set_quat_from_dir("LeftFootMod", "LeftToe", up_hint)
