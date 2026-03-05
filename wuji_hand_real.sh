@@ -1,9 +1,3 @@
-#!/bin/bash
-
-# Wuji Hand Controller via Redis
-# Read hand control data from Redis and drive Wuji hand in real time.
-
-source ~/miniconda3/bin/activate twist2
 SCRIPT_DIR=$(dirname $(realpath $0))
 cd deploy_real
 
@@ -11,7 +5,8 @@ cd deploy_real
 redis_ip="localhost"
 hand_side="left"  # "left" or "right"
 target_fps=50
-retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_manus_${hand_side}.yaml"
+hand="manus"      # "manus" or "vdhand"
+retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_${hand}_${hand_side}.yaml"
 
 # Start controller
 python server_wuji_hand_redis.py \
@@ -21,7 +16,7 @@ python server_wuji_hand_redis.py \
     --redis_ip ${redis_ip} \
     --target_fps ${target_fps} \
     --no_smooth \
-    --disable_dexpilot_projection \
+    # --disable_dexpilot_projection \
     # --use_model \
     # --policy_tag wuji_left_new_1 \
     # --policy_epoch 200

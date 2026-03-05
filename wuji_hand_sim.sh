@@ -1,11 +1,12 @@
-SCRIPT_DIR="$(cd "$(dirname "$(realpath "$0")")" && pwd)"
-cd "${SCRIPT_DIR}/deploy_real"
+SCRIPT_DIR=$(dirname $(realpath $0))
+cd deploy_real
 
 # Runtime configuration
 redis_ip="localhost"
 hand_side="left"  # "left" or "right"
-target_fps=60
-retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_manus_${hand_side}.yaml"
+target_fps=50
+hand="manus"      # "manus" or "vdhand"
+retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_${hand}_${hand_side}.yaml"
 
 # Start controller
 python server_wuji_hand_sim_redis.py \

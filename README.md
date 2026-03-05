@@ -43,6 +43,7 @@ conda activate humdex
 # install wuji-retargeting
 
 cd wuji-retargeting
+git submodule update --init --recursive
 pip install -r requirements.txt
 pip install -e .
 ```
