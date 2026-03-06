@@ -70,7 +70,7 @@ Then follow the official [doc](https://nvlabs.github.io/GR00T-WholeBodyControl/)
 
 ## Teleop
 
-For a concise end-to-end setup flow, see [`doc/TELEOP.md`](doc/TELEOP.md).
+For a concise end-to-end setup flow, see [`doc/teleop.md`](doc/teleop.md).
 
 ### 1) Unified Entry
 
@@ -260,7 +260,7 @@ Checkpoint location:
 
 ## Data Collection
 
-For robot/human recording workflow and saved data layout, see [`doc/DATA_COLLECTION.md`](doc/DATA_COLLECTION.md).
+For robot/human recording workflow and saved data layout, see [`doc/data_collection.md`](doc/data_collection.md).
 
 ### 1) Start Camera Stream on g1
 
