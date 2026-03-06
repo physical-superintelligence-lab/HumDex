@@ -1,6 +1,6 @@
 # VDMocap & VDHand Setup Guide
 
-This document describes how to prepare VDMocap/VDHand for teleoperation in this repository, including device purchase, wearing, Windows-side software setup, and Linux-side config mapping.
+This document describes how to prepare VDMocap/VDHand for teleoperation in this repository.
 
 ## 1. Purchase and Wearing
 
@@ -23,38 +23,29 @@ Use a **Windows PC** and connect the official hardware through USB.
 
 ### 2.1 Install Wi-Fi Driver
 
-Download:
+Install the official Wi-Fi driver on the Windows PC first.
 
-- https://drive.google.com/file/d/1SCIezEEy2k8YOBB9VjTMO7oKLXqWLQaV/view?usp=sharing
+Download link: [link](https://drive.google.com/file/d/1SCIezEEy2k8YOBB9VjTMO7oKLXqWLQaV/view?usp=sharing)
 
-Steps:
-
-1. Download the package.
-2. Extract it.
-3. Run the installer and finish the driver installation.
+After downloading, extract the package and run the installer.
 
 ### 2.2 Install DreamsCapStudio
 
-Download:
+Install DreamsCapStudio after the driver setup is complete.
 
-- https://drive.google.com/file/d/1480iz0yccpRhxriPuIlsLNuUNTlIVk-L/view?usp=sharing
+Download link: [link](https://drive.google.com/file/d/1480iz0yccpRhxriPuIlsLNuUNTlIVk-L/view?usp=sharing)
 
-Steps:
-
-1. Download the package.
-2. Extract it.
-3. Launch `DreamsCapStudio`.
+After downloading, extract the package and launch `DreamsCapStudio`.
 
 ### 2.3 Power On, Connect, and Calibrate
 
 1. Power on the devices.
 2. Open `DreamsCapStudio`.
 3. Click **Connect**.
-4. Run **Calibration** (or **FastCalibration** if needed).
+4. Run **Calibration**.
 
-Reference screenshot:
 
-![DreamsCapStudio connect and calibration](../assets/vdmocap/software.jpg)
+<img src="../assets/vdmocap/software.jpg" alt="DreamsCapStudio connect and calibration" width="720" />
 
 ### 2.4 Enable Data Broadcast (IP/Port)
 
@@ -65,12 +56,11 @@ Reference screenshot:
 Network requirement:
 
 - Ensure the Linux machine and Windows machine are reachable on the same network
-  - either same Wi-Fi
-  - or wired LAN with reachable IPs
+  - same Wi-Fi
+  - wired LAN with reachable IPs
 
-Reference screenshot:
 
-![DreamsCapStudio data share settings](../assets/vdmocap/data_share.jpg)
+<img src="../assets/vdmocap/data_share.jpg" alt="DreamsCapStudio data share settings" width="720" />
 
 
 ## 3. Map Settings to `teleop.yaml`
@@ -78,35 +68,3 @@ Reference screenshot:
 After setting broadcast IP/Port in DreamsCapStudio, sync them into:
 
 - `deploy_real/config/teleop.yaml` (`network.mocap` section)
-
-Typical mapping in this repository:
-
-- Body stream:
-  - `network.mocap.body.ip`
-  - `network.mocap.body.port`
-  - `network.mocap.body.index`
-- Hand stream:
-  - `network.mocap.hand.ip`
-  - `network.mocap.hand.port`
-  - `network.mocap.hand.index`
-
-Current config block location:
-
-- `deploy_real/config/teleop.yaml` (`network.mocap.default/body/hand`)
-
-Example (adjust to your own broadcast settings):
-
-```yaml
-network:
-  mocap:
-    body:
-      ip: "192.168.1.111"
-      port: 7000
-      index: 0
-    hand:
-      ip: "192.168.1.111"
-      port: 7000
-      index: 1
-```
-
-If your DreamsCapStudio IP/port differs, update both body and hand entries accordingly.
