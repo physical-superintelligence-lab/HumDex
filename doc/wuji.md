@@ -9,7 +9,7 @@ First, 3D print the G1-Wuji adapter from [link](https://drive.google.com/file/d/
 
 ## 2. Install Upgrader and Flash Firmware
 
-Connect power to the hand, connect the hand to your PC with a USB cable, then follow the official Upgrader guide at [link](https://docs.wuji.tech/docs/zh/wuji-hand/latest/wuji-hand-upgrader-user-guide/) to install Upgrader and flash firmware.
+Connect power to the hand, connect the hand to your PC with a USB cable, then follow the official Upgrader guide at [link](https://docs.wuji.tech/docs/en/wuji-hand/latest/wuji-hand-upgrader-user-guide/) to install Upgrader and flash firmware.
 
 
 ## 3. Configure udev for Non-root USB Access
@@ -34,4 +34,8 @@ lsusb -v -d 0483:2000 | grep iSerial
 
 Then set `hand_side` and `serial_number` in `wuji_hand_real.sh` before starting the controller.
 
-For more Wuji Hand details, see the official documentation at [link](https://docs.wuji.tech/docs/zh/wuji-hand/latest/).
+---
+
+## More Information
+
+For more Wuji Hand details, see the official documentation at [link](https://docs.wuji.tech/docs/en/wuji-hand/latest/).
