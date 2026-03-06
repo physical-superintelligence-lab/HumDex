@@ -5,14 +5,15 @@ cd deploy_real
 redis_ip="localhost"
 hand_side="left"  # "left" or "right"
 target_fps=50
-hand="manus"      # "manus" or "vdhand"
-retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_${hand}_${hand_side}.yaml"
+serial_number="3555374E3533"
+glove="manus"      # "manus" or "vdhand"
+retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_${glove}_${hand_side}.yaml"
 
 # Start controller
 python server_wuji_hand_redis.py \
     --hand_side ${hand_side} \
     --config ${retarget_config} \
-    --serial_number 3555374E3533 \
+    --serial_number ${serial_number} \
     --redis_ip ${redis_ip} \
     --target_fps ${target_fps} \
     --no_smooth \
