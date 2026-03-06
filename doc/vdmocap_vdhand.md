@@ -25,17 +25,13 @@ Use a **Windows PC** and connect the official hardware through USB.
 
 Install the official Wi-Fi driver on the Windows PC first.
 
-Download link: [link](https://drive.google.com/file/d/1SCIezEEy2k8YOBB9VjTMO7oKLXqWLQaV/view?usp=sharing)
-
-After downloading, extract the package and run the installer.
+Download it from [link](https://drive.google.com/file/d/1SCIezEEy2k8YOBB9VjTMO7oKLXqWLQaV/view?usp=sharing), then extract the package and run the installer.
 
 ### 2.2 Install DreamsCapStudio
 
 Install DreamsCapStudio after the driver setup is complete.
 
-Download link: [link](https://drive.google.com/file/d/1480iz0yccpRhxriPuIlsLNuUNTlIVk-L/view?usp=sharing)
-
-After downloading, extract the package and launch `DreamsCapStudio`.
+Download it from [link](https://drive.google.com/file/d/1480iz0yccpRhxriPuIlsLNuUNTlIVk-L/view?usp=sharing), then extract the package and launch `DreamsCapStudio`.
 
 ### 2.3 Power On, Connect, and Calibrate
 
