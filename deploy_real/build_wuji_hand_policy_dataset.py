@@ -238,12 +238,17 @@ def _build_one_episode_side(
             # 避免单帧坏数据导致整段失败
             continue
 
-        # 按需求：这两个字段统一置零，保持 shape 一致。
-        # mediapipe_21d_transformed: (21,3), fingertips_rel_wrist: (5,3)
-        mp21_t = np.zeros((21, 3), dtype=np.float32)
-        tips = np.zeros((5, 3), dtype=np.float32)
+        try:
+            mp21 = hand_26d_to_mediapipe_21d(tracking, hand_side=side, print_distances=False)
+            mp21 = np.asarray(mp21, dtype=np.float32).reshape(21, 3)
+            mp21_t = apply_mediapipe_transformations(mp21, hand_type=side)
+            mp21_t = np.asarray(mp21_t, dtype=np.float32).reshape(21, 3)
+            tips = mp21_t[FINGERTIP_INDICES, :].copy()  # (5,3)，wrist 已为零点
+        except Exception:
+            continue
 
-        if not np.isfinite(a).all():
+        # 过滤包含 NaN/Inf 的坏帧，避免训练 loss 变成 nan
+        if (not np.isfinite(a).all()) or (not np.isfinite(mp21_t).all()) or (not np.isfinite(tips).all()):
             dropped_non_finite += 1
             continue
 
