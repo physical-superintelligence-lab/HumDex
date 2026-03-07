@@ -47,6 +47,8 @@ cd wuji-retargeting
 git submodule update --init --recursive
 pip install -r requirements.txt
 pip install -e .
+
+pip install pyrealsense2
 ```
 
 For the rest of `humdex` environment setup, follow TWIST2 README:

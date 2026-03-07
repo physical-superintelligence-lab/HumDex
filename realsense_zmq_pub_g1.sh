@@ -28,7 +28,13 @@ done
 REMOTE_CMD=$(cat <<'EOF'
 set -euo pipefail
 source ~/miniconda3/bin/activate "__CONDA_ENV__"
-cd "__REMOTE_DIR__"
+REMOTE_DIR="__REMOTE_DIR__"
+if [[ "${REMOTE_DIR}" == "~" ]]; then
+  REMOTE_DIR="${HOME}"
+elif [[ "${REMOTE_DIR}" == ~/* ]]; then
+  REMOTE_DIR="${HOME}/${REMOTE_DIR#~/}"
+fi
+cd "${REMOTE_DIR}"
 sudo killall -9 videohub_pc4 >/dev/null 2>&1 || true
 sleep 0.1
 exec /usr/bin/python3 ./server_realsense_zmq_pub.py __PY_ARGS__

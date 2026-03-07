@@ -7,7 +7,7 @@ hand_side="left"  # "left" or "right"
 target_fps=50
 glove="manus"      # "manus" or "vdhand"
 retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_${glove}_${hand_side}.yaml"
-policy_tag="geort_filter_wuji"
+policy_tag="geort_wuji_left"
 policy_epoch=-1
 
 # Start controller

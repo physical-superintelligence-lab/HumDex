@@ -43,7 +43,7 @@ import numpy as np
 # ===================== PATH / CONFIG =====================
 
 def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[1]
 
 
 PROJECT_ROOT = _repo_root()
@@ -193,10 +193,10 @@ def _resolve_output_path(output_name: Optional[str]) -> Path:
 
 def _load_apply_mediapipe_transformations():
     """
-    Load only wuji_retargeting/wuji_retargeting/mediapipe.py
+    Load only wuji-retargeting/wuji_retargeting/mediapipe.py
     to avoid importing the whole package and triggering heavy dependencies.
     """
-    mediapipe_py = PROJECT_ROOT / "wuji_retargeting" / "wuji_retargeting" / "mediapipe.py"
+    mediapipe_py = PROJECT_ROOT / "wuji-retargeting" / "wuji_retargeting" / "mediapipe.py"
     if not mediapipe_py.exists():
         raise FileNotFoundError(f"File not found: {mediapipe_py}")
 

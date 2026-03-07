@@ -20,7 +20,7 @@ scp deploy_real/server_realsense_zmq_pub.py unitree@192.168.123.164:~/
 conda create -y -n realsense python=3.10
 conda activate realsense
 python -m pip install --upgrade pip
-python -m pip install pyrealsense2 pyzmq numpy opencv-python rich
+python -m pip install pyrealsense2 pyzmq numpy opencv-python rich zmq
 ```
 
 After the environment is ready, start the camera publisher with:

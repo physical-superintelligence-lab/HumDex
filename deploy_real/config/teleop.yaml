@@ -8,17 +8,17 @@ network:
     ip: "localhost"                                              # Redis host for teleop publish/consume
   mocap:
     default:
-      ip: "192.168.1.111"                                        # Fallback mocap sender IP
+      ip: "192.168.0.139"                                        # Fallback mocap sender IP
       port: 7000                                                 # Fallback mocap sender UDP port
       index: 0                                                   # Fallback SDK stream index
       world_space: 0                                             # VDMocap world-space flag
       local_port: 0                                              # Local UDP port for SDK open
     body:
-      ip: "192.168.1.111"                                        # Body mocap sender IP
+      ip: "192.168.0.139"                                        # Body mocap sender IP
       port: 7000                                                 # Body mocap sender UDP port
       index: 0                                                   # Body SDK stream index
     hand:
-      ip: "192.168.1.111"                                        # Hand mocap sender IP
+      ip: "192.168.0.139"                                        # Hand mocap sender IP
       port: 7000                                                 # Hand mocap sender UDP port
       index: 1                                                   # Hand SDK stream index
 

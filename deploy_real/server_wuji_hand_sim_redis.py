@@ -177,6 +177,24 @@ def hand_26d_to_mediapipe_21d(hand_data_dict: Dict[str, Any], hand_side: str, pr
     return mp21
 
 
+def _has_nonfinite_tracking_values(hand_data_dict: Dict[str, Any]) -> bool:
+    """
+    Validate tracking payload values before retargeting.
+    Each joint is expected as [pos3, quat4]. We only need pos3 here.
+    """
+    for _k, v in hand_data_dict.items():
+        if not (isinstance(v, (list, tuple)) and len(v) >= 1):
+            continue
+        pos = v[0]
+        try:
+            p = np.asarray(pos, dtype=np.float32).reshape(3)
+        except Exception:
+            continue
+        if not np.isfinite(p).all():
+            return True
+    return False
+
+
 def _build_wuji_reorder_idx(retargeter: Any) -> Optional[np.ndarray]:
     """
     Retarget qpos order is not always finger{i}_joint{j} natural order.
@@ -241,6 +259,7 @@ class WujiHandSimRedisViz:
 
         self.running = True
         self._stop_requested_by_signal: Optional[int] = None
+        self._nonfinite_drop_warn_count = 0
 
         # Redis keys (keep consistent with deploy_real/server_wuji_hand_redis.py)
         self.robot_key = "unitree_g1_with_hands"
@@ -370,13 +389,25 @@ class WujiHandSimRedisViz:
             if not bool(payload.get("is_active", False)):
                 return False, None
             hand_dict = {k: v for k, v in payload.items() if k not in ["is_active", "timestamp"]}
+            if _has_nonfinite_tracking_values(hand_dict):
+                self._nonfinite_drop_warn_count += 1
+                if self._nonfinite_drop_warn_count <= 5 or (self._nonfinite_drop_warn_count % 50 == 0):
+                    print(
+                        "[WujiHandSim] [WARN] drop non-finite hand_tracking frame "
+                        f"(count={self._nonfinite_drop_warn_count})"
+                    )
+                return False, None
             return True, hand_dict
         except Exception:
             return False, None
 
     def _retarget_to_wuji20(self, hand_dict: Dict[str, Any]) -> np.ndarray:
         mp21 = hand_26d_to_mediapipe_21d(hand_dict, self.hand_side, print_distances=False)
+        if not np.isfinite(mp21).all():
+            raise ValueError("Non-finite value in mp21")
         mp21_t = self._apply_mediapipe_transformations(mp21, hand_type=self.hand_side)
+        if not np.isfinite(mp21_t).all():
+            raise ValueError("Non-finite value in mp21_t")
         if self.use_model:
             if self.model_infer is None:
                 raise RuntimeError("model_infer is None but use_model=True")
@@ -385,8 +416,12 @@ class WujiHandSimRedisViz:
                 human_points = pts21[[4, 8, 12, 16, 20], :3]
             else:
                 human_points = pts21
+            if not np.isfinite(human_points).all():
+                raise ValueError("Non-finite value in model_input")
             q = self.model_infer.forward(human_points)
             q = np.asarray(q, dtype=np.float32).reshape(-1)
+            if not np.isfinite(q).all():
+                raise ValueError("Non-finite value in model_output")
             if q.shape[0] != 20:
                 raise ValueError(f"Model output dim mismatch: expect 20, got {q.shape[0]}")
             return q.reshape(5, 4)

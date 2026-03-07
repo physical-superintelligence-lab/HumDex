@@ -332,7 +332,6 @@ def _retarget_body_frame(comps: Dict[str, Any], cfg: Any, fr: Any) -> tuple[Any,
         return None, None, "no_body_or_gmr"
     try:
         fr_local = dict(fr)
-        fr_local = comps["apply_geo_to_bvh_official"](fr_local)
         fr_local = comps["apply_bvh_like_coordinate_transform"](fr_local, pos_unit="m", apply_rotation=True)
         fr_gmr = comps["gmr_rename_and_footmod"](fr_local, fmt=str(cfg.format))
         qpos = comps["retargeter"].retarget(fr_gmr, offset_to_ground=bool(cfg.offset_to_ground))

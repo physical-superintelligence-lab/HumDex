@@ -567,6 +567,8 @@ class SlimevrBodyReader:
             for vmc_name, bvh_name in vmc_to_bvh.items():
                 self._viewer_fk.name_map[vmc_viewer._normalize_name(vmc_name)] = bvh_name
             self._viewer_fk.rot_mode = str(self.cfg.vmc_rot_mode)
+            # Keep quaternion convention aligned with legacy slimevr_teleop.sh (--vmc_no_invert_zw).
+            self._viewer_fk.invert_vmc_zw = False
             # Keep viewer-axis corrections identical to the previous teleop default config.
             self._viewer_fk.bone_axis_override = {k: dict(v) for k, v in _DEFAULT_VIEWER_BONE_AXIS_OVERRIDE.items()}
             self._viewer_fk.start()

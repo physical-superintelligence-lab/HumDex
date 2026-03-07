@@ -16,7 +16,7 @@ import signal
 import sys
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 
 def now_ms() -> int:
     """Return current wall-clock time in milliseconds."""
@@ -127,6 +127,24 @@ def hand_26d_to_mediapipe_21d(hand_data_dict, hand_side="left"):
     mediapipe_21d[1:] = mediapipe_21d[1:] * scale_factor
 
     return mediapipe_21d
+
+
+def _has_nonfinite_tracking_values(hand_data_dict: Dict[str, Any]) -> bool:
+    """
+    Validate tracking payload values before retargeting.
+    Each joint is expected as [pos3, quat4]. We only need pos3 here.
+    """
+    for _k, v in hand_data_dict.items():
+        if not (isinstance(v, (list, tuple)) and len(v) >= 1):
+            continue
+        pos = v[0]
+        try:
+            p = np.asarray(pos, dtype=np.float32).reshape(3)
+        except Exception:
+            continue
+        if not np.isfinite(p).all():
+            return True
+    return False
 
 
 def smooth_move(hand, controller, target_qpos, duration=0.1, steps=10):
@@ -306,6 +324,7 @@ class WujiHandRedisController:
         self._stop_requested_by_signal = None
         self._frame_count = 0
         self._has_received_data = False
+        self._nonfinite_drop_warn_count = 0
         
         # FPS stats for valid data frames
         self._fps_start_time = None
@@ -319,12 +338,18 @@ class WujiHandRedisController:
           return: (5,4) joint targets
         """
         pts21 = np.asarray(pts21, dtype=np.float32).reshape(21, 3)
+        if not np.isfinite(pts21).all():
+            raise ValueError("Non-finite value in pts21 before model inference")
         if self.use_fingertips5:
             human_points = pts21[[4, 8, 12, 16, 20], :3]  # (5,3)
         else:
             human_points = pts21
+        if not np.isfinite(human_points).all():
+            raise ValueError("Non-finite value in model_input")
         qpos_20 = self.model.forward(human_points)
         qpos_20 = np.asarray(qpos_20, dtype=np.float32).reshape(-1)
+        if not np.isfinite(qpos_20).all():
+            raise ValueError("Non-finite value in model_output")
         if qpos_20.shape[0] != 20:
             raise ValueError(f"Model output dim mismatch: expect 20, got {qpos_20.shape[0]}")
         return qpos_20.reshape(5, 4)
@@ -332,6 +357,8 @@ class WujiHandRedisController:
     def _apply_safety(self, qpos_5x4: np.ndarray) -> np.ndarray:
         """Apply clamp and per-step delta limit to model output."""
         q = np.asarray(qpos_5x4, dtype=np.float32).reshape(5, 4)
+        if not np.isfinite(q).all():
+            q = np.asarray(self.last_qpos if self.last_qpos is not None else self.zero_pose, dtype=np.float32).reshape(5, 4)
         q = np.clip(q, self.clamp_min, self.clamp_max)
         if self.last_qpos is not None and np.asarray(self.last_qpos).shape == q.shape:
             delta = q - self.last_qpos
@@ -388,6 +415,14 @@ class WujiHandRedisController:
                 # Filter out metadata fields.
                 hand_dict = {k: v for k, v in hand_data.items() 
                            if k not in ["is_active", "timestamp"]}
+                if _has_nonfinite_tracking_values(hand_dict):
+                    self._nonfinite_drop_warn_count += 1
+                    if self._nonfinite_drop_warn_count <= 5 or (self._nonfinite_drop_warn_count % 50 == 0):
+                        print(
+                            "[WARN] Dropping non-finite hand_tracking frame "
+                            f"(count={self._nonfinite_drop_warn_count})."
+                        )
+                    return None, None
                 
                 # Print one-time success marker.
                 if not hasattr(self, '_debug_success_printed'):
@@ -492,12 +527,16 @@ class WujiHandRedisController:
                         
                         # 1. Convert 26D dict to 21D MediaPipe keypoints.
                         mediapipe_21d = hand_26d_to_mediapipe_21d(hand_data_dict, self.hand_side)
+                        if not np.isfinite(mediapipe_21d).all():
+                            raise ValueError("Non-finite value in mediapipe_21d")
 
                         # 2. Apply MediaPipe coordinate transforms.
                         mediapipe_transformed = apply_mediapipe_transformations(
                             mediapipe_21d, 
                             hand_type=self.hand_side
                         )
+                        if not np.isfinite(mediapipe_transformed).all():
+                            raise ValueError("Non-finite value in mediapipe_transformed")
                         
                         # 3. Retarget / Model inference
                         if self.use_model:
