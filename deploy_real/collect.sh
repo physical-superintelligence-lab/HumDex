@@ -19,6 +19,7 @@ DEFAULT_SESSION="20260306_2310_twist2_left"
 HAND_SIDE="${2:-left}"
 OUTPUT_NAME="${3:-wuji_${HAND_SIDE}}"
 OUTPUT_DIR="${REPO_ROOT}/wuji_policy/data"
+INTERMEDIATE_ROOT="${REPO_ROOT}/deploy_real/wuji_hand_policy_dataset_tmp/${OUTPUT_NAME}_${HAND_SIDE}"
 
 if [[ $# -ge 1 && -n "${1:-}" ]]; then
   INPUT_ROOT="${DATA_ROOT}/$1"
@@ -43,9 +44,11 @@ if [[ "${HAND_SIDE}" != "left" && "${HAND_SIDE}" != "right" && "${HAND_SIDE}" !=
 fi
 
 mkdir -p "${OUTPUT_DIR}"
+mkdir -p "${INTERMEDIATE_ROOT}"
 
 echo "[INFO] input_root : ${INPUT_ROOT}"
 echo "[INFO] hand_side  : ${HAND_SIDE}"
+echo "[INFO] intermediate: ${INTERMEDIATE_ROOT}"
 echo "[INFO] output_dir : ${OUTPUT_DIR}"
 echo "[INFO] output_name: ${OUTPUT_NAME}.npz"
 
@@ -53,6 +56,7 @@ python3 "${SCRIPT_DIR}/collect.py" \
   --input_root "${INPUT_ROOT}" \
   --hand_side "${HAND_SIDE}" \
   --output_dir "${OUTPUT_DIR}" \
-  --output_name "${OUTPUT_NAME}"
+  --output_name "${OUTPUT_NAME}" \
+  --intermediate_root "${INTERMEDIATE_ROOT}"
 
 echo "[DONE] Dataset written to: ${OUTPUT_DIR}/${OUTPUT_NAME}.npz"

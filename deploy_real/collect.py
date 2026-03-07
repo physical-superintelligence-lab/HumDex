@@ -1,220 +1,39 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
-One-click: JSON episodes -> merged training NPZ for GeoRT.
+One-click dataset builder using the strict two-step pipeline:
+1) build_wuji_hand_policy_dataset.py
+2) collect2.py
 
-This merges the logic of:
-- build_wuji_hand_policy_dataset.py (data.json -> hand points + qpos)
-- collect.py (merge segments + write qpos-compatible keys)
-
-Example:
-python collect.py \
-  --input_root "/Users/bigxu/Desktop/demo/HumDex/deploy_real/humdex demonstration/20260306_2310_twist2_left" \
-  --hand_side left \
-  --output_name wuji_left
+This keeps the final NPZ format identical to collect2.py output.
 """
 
 from __future__ import annotations
 
 import argparse
 import importlib.util
-import json
+import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-
-import numpy as np
-
-HUMAN_KEY = "fingertips_rel_wrist"
-ROBOT_IN_KEY = "action_wuji_qpos_target"
-QPOS_KEY_OUT = "qpos"
-QPOS_ALIAS_KEYS = ["robot_qpos", "joint", "joint_angle", "joint_angles"]
-KEEP_ORIGINAL_ROBOT_KEY = True
-
-OPTIONAL_CONCAT_KEYS = ["frame_idx", "timestamp_ms", "mediapipe_21d_transformed"]
-
-MEDIAPIPE_21_KEYPOINT_NAMES: List[str] = [
-    "Wrist", "Thumb_CMC", "Thumb_MCP", "Thumb_IP", "Thumb_Tip",
-    "Index_MCP", "Index_PIP", "Index_DIP", "Index_Tip",
-    "Middle_MCP", "Middle_PIP", "Middle_DIP", "Middle_Tip",
-    "Ring_MCP", "Ring_PIP", "Ring_DIP", "Ring_Tip",
-    "Pinky_MCP", "Pinky_PIP", "Pinky_DIP", "Pinky_Tip",
-]
-FINGERTIP_NAMES: List[str] = ["Thumb_Tip", "Index_Tip", "Middle_Tip", "Ring_Tip", "Pinky_Tip"]
-FINGERTIP_INDICES: List[int] = [4, 8, 12, 16, 20]
-
-HAND_JOINT_NAMES_26: List[str] = [
-    "Wrist", "Palm",
-    "ThumbMetacarpal", "ThumbProximal", "ThumbDistal", "ThumbTip",
-    "IndexMetacarpal", "IndexProximal", "IndexIntermediate", "IndexDistal", "IndexTip",
-    "MiddleMetacarpal", "MiddleProximal", "MiddleIntermediate", "MiddleDistal", "MiddleTip",
-    "RingMetacarpal", "RingProximal", "RingIntermediate", "RingDistal", "RingTip",
-    "LittleMetacarpal", "LittleProximal", "LittleIntermediate", "LittleDistal", "LittleTip",
-]
-MEDIAPIPE_MAPPING_26_TO_21: List[int] = [
-    1, 2, 3, 4, 5,
-    6, 7, 8, 10,
-    11, 12, 13, 15,
-    16, 17, 18, 20,
-    21, 22, 23, 25,
-]
 
 
 def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
-def _resolve_output_path(output_dir: Path, output_name: Optional[str], hand_side: str) -> Path:
-    if output_name:
-        name = output_name if output_name.endswith(".npz") else f"{output_name}.npz"
-    else:
-        suffix = hand_side if hand_side in ("left", "right") else "both"
-        name = f"wuji_{suffix}.npz"
-    return (output_dir / name).resolve()
-
-
-def _iter_data_json_files(input_root: Path) -> List[Path]:
-    return sorted(input_root.rglob("episode_*/data.json"))
-
-
-def _load_json(path: Path) -> dict:
-    with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _frames_from_root(root: dict) -> List[dict]:
-    if isinstance(root, dict) and "data" in root and isinstance(root["data"], list):
-        return root["data"]
-    raise ValueError("Unsupported data.json format: expected root['data'] as list.")
-
-
-def _safe_float32_array(x, expected_len: Optional[int] = None) -> np.ndarray:
-    arr = np.asarray(x, dtype=np.float32).reshape(-1)
-    if expected_len is not None and arr.size != expected_len:
-        raise ValueError(f"dimension mismatch: expected {expected_len}, got {arr.size}")
-    return arr
-
-
-def _load_apply_mediapipe_transformations():
-    mediapipe_py = _repo_root() / "wuji_retargeting" / "wuji_retargeting" / "mediapipe.py"
-    if not mediapipe_py.exists():
-        raise FileNotFoundError(f"File not found: {mediapipe_py}")
-
-    spec = importlib.util.spec_from_file_location("_wuji_retargeting_mediapipe", str(mediapipe_py))
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Failed to create import spec for {mediapipe_py}")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)  # type: ignore[attr-defined]
-    fn = getattr(mod, "apply_mediapipe_transformations", None)
-    if fn is None:
-        raise AttributeError("apply_mediapipe_transformations not found")
-    return fn
-
-
-def hand_26d_to_mediapipe_21d(
-    hand_data_dict: Dict,
-    hand_side: str = "left",
-    print_distances: bool = False,
-) -> np.ndarray:
-    hand_side_prefix = "LeftHand" if hand_side.lower() == "left" else "RightHand"
-    joint_positions_26 = np.zeros((26, 3), dtype=np.float32)
-    for i, joint_name in enumerate(HAND_JOINT_NAMES_26):
-        key = hand_side_prefix + joint_name
-        if key in hand_data_dict:
-            joint_positions_26[i] = hand_data_dict[key][0]
-        else:
-            joint_positions_26[i] = [0.0, 0.0, 0.0]
-    mediapipe_21d = joint_positions_26[MEDIAPIPE_MAPPING_26_TO_21]
-    wrist_pos = mediapipe_21d[0].copy()
-    mediapipe_21d = mediapipe_21d - wrist_pos
-    scale_factor = 1.0
-    mediapipe_21d[1:] = mediapipe_21d[1:] * scale_factor
-    if print_distances:
-        pass
-    return mediapipe_21d
-
-
-def _build_one_episode_side(
-    frames: List[dict],
-    side: str,
-    apply_mediapipe_transformations,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    side = side.lower()
-    if side not in ("left", "right"):
-        raise ValueError(f"side must be 'left' or 'right', got: {side}")
-
-    k_action = f"action_wuji_qpos_target_{side}"
-    k_tracking = f"hand_tracking_{side}"
-    k_t_action = f"t_action_wuji_hand_{side}"
-
-    actions: List[np.ndarray] = []
-    mp21_all: List[np.ndarray] = []
-    tips_all: List[np.ndarray] = []
-    idx_all: List[int] = []
-    ts_all: List[int] = []
-
-    for fr in frames:
-        action = fr.get(k_action, None)
-        tracking = fr.get(k_tracking, None)
-        if action is None or tracking is None:
-            continue
-
-        if not isinstance(tracking, dict):
-            continue
-        if not bool(tracking.get("is_active", True)):
-            continue
-
-        try:
-            a = _safe_float32_array(action, expected_len=20)
-            mp21 = hand_26d_to_mediapipe_21d(tracking, hand_side=side, print_distances=False)
-            mp21 = np.asarray(mp21, dtype=np.float32).reshape(21, 3)
-            mp21_t = apply_mediapipe_transformations(mp21, hand_type=side)
-            mp21_t = np.asarray(mp21_t, dtype=np.float32).reshape(21, 3)
-        except Exception:
-            continue
-
-        tips = mp21_t[FINGERTIP_INDICES, :].copy()
-
-        actions.append(a)
-        mp21_all.append(mp21_t)
-        tips_all.append(tips)
-        idx_all.append(int(fr.get("idx", len(idx_all))))
-
-        ts = fr.get(k_t_action, None)
-        if ts is None:
-            ts = tracking.get("timestamp", None)
-        ts_all.append(int(ts) if ts is not None else -1)
-
-    if len(actions) == 0:
-        return (
-            np.zeros((0, 20), dtype=np.float32),
-            np.zeros((0, 21, 3), dtype=np.float32),
-            np.zeros((0, 5, 3), dtype=np.float32),
-            np.zeros((0,), dtype=np.int64),
-            np.zeros((0,), dtype=np.int64),
-        )
-
-    return (
-        np.stack(actions, axis=0),
-        np.stack(mp21_all, axis=0),
-        np.stack(tips_all, axis=0),
-        np.asarray(idx_all, dtype=np.int64),
-        np.asarray(ts_all, dtype=np.int64),
-    )
+    return Path(__file__).resolve().parents[1]
 
 
 def _parse_args():
-    parser = argparse.ArgumentParser(description="One-click build merged GeoRT training dataset from demonstration data.json files.")
+    parser = argparse.ArgumentParser(description="Run build_wuji_hand_policy_dataset.py then collect2.py.")
     parser.add_argument(
         "--input_root",
         type=str,
-        default=str(_repo_root() / "deploy_real" / "twist2_demonstration"),
-        help="Root directory of twist2_demonstration.",
+        default=str(_repo_root() / "deploy_real" / "humdex demonstration" / "20260306_2310_twist2_left"),
+        help="Input root containing episode_*/data.json.",
     )
     parser.add_argument(
         "--hand_side",
         type=str,
-        default="right",
+        default="left",
         choices=["left", "right", "both"],
         help="Which hand side to export.",
     )
@@ -222,128 +41,94 @@ def _parse_args():
         "--output_dir",
         type=str,
         default=str(_repo_root() / "wuji_policy" / "data"),
-        help="Output directory for merged npz.",
+        help="Directory for final merged npz.",
     )
     parser.add_argument(
         "--output_name",
         type=str,
         default="",
-        help="Output NPZ file name, with or without the .npz suffix.",
+        help="Final output name, with or without .npz. Default: wuji_<hand_side>.npz",
     )
     parser.add_argument(
-        "--max_files",
-        type=int,
-        default=-1,
-        help="Maximum number of data.json files to process, useful for debugging.",
+        "--intermediate_root",
+        type=str,
+        default="",
+        help="Optional intermediate output directory for per-segment npz files.",
     )
     return parser.parse_args()
 
 
+def _resolve_output_path(output_dir: Path, output_name: str, hand_side: str) -> Path:
+    if output_name:
+        filename = output_name if output_name.endswith(".npz") else f"{output_name}.npz"
+    else:
+        filename = f"wuji_{hand_side}.npz"
+    return (output_dir / filename).resolve()
+
+
+def _load_collect2_module(collect2_path: Path):
+    spec = importlib.util.spec_from_file_location("collect2_module", str(collect2_path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Failed to create import spec: {collect2_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    return module
+
+
 def main() -> int:
     args = _parse_args()
+    repo_root = _repo_root()
+    script_dir = Path(__file__).resolve().parent
+
     input_root = Path(args.input_root).expanduser().resolve()
     output_dir = Path(args.output_dir).expanduser().resolve()
-    out_path = _resolve_output_path(output_dir, args.output_name.strip() or None, args.hand_side)
+    output_path = _resolve_output_path(output_dir, args.output_name.strip(), args.hand_side)
+
+    if args.intermediate_root.strip():
+        intermediate_root = Path(args.intermediate_root).expanduser().resolve()
+    else:
+        intermediate_root = (repo_root / "deploy_real" / "wuji_hand_policy_dataset_tmp" / f"{output_path.stem}_{args.hand_side}").resolve()
+
     output_dir.mkdir(parents=True, exist_ok=True)
+    intermediate_root.mkdir(parents=True, exist_ok=True)
 
     if not input_root.exists():
         print(f"[ERROR] input_root does not exist: {input_root}", file=sys.stderr)
         return 1
 
-    apply_mediapipe_transformations = _load_apply_mediapipe_transformations()
-    data_json_files = _iter_data_json_files(input_root)
-    if args.max_files > 0:
-        data_json_files = data_json_files[:args.max_files]
-    if not data_json_files:
-        print(f"[ERROR] No data.json found under: {input_root}", file=sys.stderr)
-        return 1
+    build_script = (script_dir / "build_wuji_hand_policy_dataset.py").resolve()
+    collect2_script = (script_dir / "collect2.py").resolve()
 
-    sides = ["left", "right"] if args.hand_side == "both" else [args.hand_side]
+    print(f"[INFO] input_root    : {input_root}")
+    print(f"[INFO] hand_side     : {args.hand_side}")
+    print(f"[INFO] intermediate  : {intermediate_root}")
+    print(f"[INFO] output_npz    : {output_path}")
 
-    print(f"[INFO] data.json files: {len(data_json_files)}")
-    print(f"[INFO] hand_side={args.hand_side}")
+    build_cmd = [
+        sys.executable,
+        str(build_script),
+        "--input_root",
+        str(input_root),
+        "--hand_side",
+        args.hand_side,
+        "--output_root",
+        str(intermediate_root),
+        "--overwrite",
+    ]
+    subprocess.run(build_cmd, check=True)
 
-    human_chunks: List[np.ndarray] = []
-    robot_chunks: List[np.ndarray] = []
-    optional_chunks = {k: [] for k in OPTIONAL_CONCAT_KEYS}
-    optional_presence = {k: 0 for k in OPTIONAL_CONCAT_KEYS}
+    collect2 = _load_collect2_module(collect2_script)
+    collect2.SRC_DIRS = [intermediate_root]
+    collect2.OUT_PATH = output_path
+    if args.hand_side == "left":
+        collect2.FILE_PATTERNS = ["*left.npz", "*left*.npz"]
+    elif args.hand_side == "right":
+        collect2.FILE_PATTERNS = ["*right.npz", "*right*.npz"]
+    else:
+        collect2.FILE_PATTERNS = ["*left*.npz", "*right*.npz"]
 
-    source_paths: List[str] = []
-    segment_lengths: List[int] = []
-    segment_sides: List[str] = []
-    kept_segments = 0
-    skipped_files = 0
-
-    kp_names = np.asarray(MEDIAPIPE_21_KEYPOINT_NAMES)
-    tip_names = np.asarray(FINGERTIP_NAMES)
-
-    for p in data_json_files:
-        try:
-            root = _load_json(p)
-            frames = _frames_from_root(root)
-        except Exception as e:
-            print(f"[WARN] Skip file {p}: {type(e).__name__}: {e}")
-            skipped_files += 1
-            continue
-
-        for side in sides:
-            action_arr, mp21_arr, tips_arr, idx_arr, ts_arr = _build_one_episode_side(
-                frames=frames, side=side, apply_mediapipe_transformations=apply_mediapipe_transformations
-            )
-            T = action_arr.shape[0]
-            if T <= 0:
-                continue
-
-            human_chunks.append(tips_arr.astype(np.float32))
-            robot_chunks.append(action_arr.astype(np.float32))
-
-            optional_chunks["frame_idx"].append(idx_arr)
-            optional_presence["frame_idx"] += 1
-            optional_chunks["timestamp_ms"].append(ts_arr)
-            optional_presence["timestamp_ms"] += 1
-            optional_chunks["mediapipe_21d_transformed"].append(mp21_arr.astype(np.float32))
-            optional_presence["mediapipe_21d_transformed"] += 1
-
-            source_paths.append(str(p))
-            segment_lengths.append(T)
-            segment_sides.append(side)
-            kept_segments += 1
-
-    if kept_segments == 0:
-        print("[ERROR] No valid segments found.", file=sys.stderr)
-        return 1
-
-    human_all = np.concatenate(human_chunks, axis=0)
-    robot_all = np.concatenate(robot_chunks, axis=0)
-    total_T = human_all.shape[0]
-
-    out = {
-        HUMAN_KEY: human_all,
-        QPOS_KEY_OUT: robot_all,
-        "fingertip_names": tip_names,
-        "mediapipe_21d_keypoint_names": kp_names,
-        "source_data_json_list": np.asarray(source_paths, dtype=object),
-        "segment_lengths": np.asarray(segment_lengths, dtype=np.int64),
-        "segment_hand_sides": np.asarray(segment_sides, dtype=object),
-    }
-
-    for k in QPOS_ALIAS_KEYS:
-        out[k] = robot_all
-    if KEEP_ORIGINAL_ROBOT_KEY:
-        out[ROBOT_IN_KEY] = robot_all
-
-    for k in OPTIONAL_CONCAT_KEYS:
-        if optional_presence[k] != kept_segments:
-            continue
-        arr_all = np.concatenate(optional_chunks[k], axis=0)
-        if arr_all.shape[0] == total_T:
-            out[k] = arr_all
-
-    np.savez_compressed(out_path, **out)
-    print(f"[INFO] Saved merged dataset: {out_path}")
-    print(f"[INFO] kept_segments={kept_segments}, skipped_files={skipped_files}, total_T={total_T}")
-    print("[CHECK]", HUMAN_KEY, "OK" if HUMAN_KEY in out else "MISSING")
-    print("[CHECK]", QPOS_KEY_OUT, "OK" if QPOS_KEY_OUT in out else "MISSING")
+    collect2.main()
+    print(f"[DONE] Dataset written to: {output_path}")
     return 0
 
 
