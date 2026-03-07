@@ -1,6 +1,6 @@
 {
     "name": "wuji_right",
-    "urdf_path": "./assets/wuji_hand_description/urdf/right.urdf",
+    "urdf_path": "../wuji-retargeting/wuji_retargeting/wuji_hand_description/urdf/right.urdf",
     "base_link": "palm_link",
     "joint_order": [
         "finger1_joint1", "finger1_joint2", "finger1_joint3", "finger1_joint4",
