@@ -339,3 +339,125 @@ bash data_record_human.sh --channel sonic
 ```
 
 ---
+
+## Policy Learning
+
+### 1) Install
+
+```bash
+conda activate humdex
+cd act
+pip install -r requirements.txt
+```
+
+### 2) Data Processing
+
+**a) Human data preprocessing:**
+
+For human tracking data, approximate proprioceptive state with previous-frame action.  
+Skip this step for robot data.
+
+```bash
+cd act
+python scripts/convert_human_data.py \
+  --dataset_dir /path/to/human_dataset
+```
+
+Processes `episode_*` folders in-place (creates `data_original.json` + `rgb_original/` backups).  
+`--no_backup` to skip creating backups.
+
+**b) Convert dataset to HDF5:**
+
+```bash
+cd act
+python convert_to_hdf5.py \
+  --dataset_dir /path/to/dataset \
+  --output /path/to/output.hdf5 \
+  --verify
+```
+
+To merge multiple data folders into one HDF5:
+
+```bash
+python convert_to_hdf5.py \
+  --dataset_dirs /path/to/dataset1 /path/to/dataset2 \
+  --output merged.hdf5
+```
+
+HDF5 per-episode structure:
+- `state_body` (T, 31), `action_body` (T, 35)
+- `state_wuji_hand_{left,right}` (T, 20), `action_wuji_qpos_target_{left,right}` (T, 20)
+- `head` (T,) JPEG bytes
+
+### 3) Policy Training
+
+```bash
+cd act
+python imitate_episodes.py \
+  --ckpt_root ./checkpoints \
+  --policy_class ACT \
+  --task_name my_task \
+  --batch_size 8 \
+  --seed 42 \
+  --num_epochs 3000 \
+  --lr 1e-5 \
+  --dataset_path /path/to/dataset.hdf5 \
+  --hand_side right \
+  --kl_weight 10 \
+  --chunk_size 50 \
+  --hidden_dim 512 \
+  --dim_feedforward 3200 \
+  --temporal_agg \
+  --wandb
+```
+
+`--hand_side`: `left`, `right`, or `both`.  
+`--sequential_training --epochs_per_dataset 2000 1000`: train on multiple datasets sequentially.  
+`--resume --ckpt_dir ./checkpoints/my_task/<run_dir>`: resume from checkpoint.
+
+Checkpoint location: `<ckpt_root>/<task_name>/<timestamp>/`
+
+### 4) Policy Inference
+
+**a) Offline evaluation (policy + dataset observations):**
+
+```bash
+cd act
+python policy_inference.py eval_offline \
+  --ckpt_dir ./checkpoints/my_task/<run_dir> \
+  --dataset /path/to/dataset.hdf5 \
+  --episode 0 \
+  --hand_side right \
+  --temporal_agg \
+  --save_actions
+```
+
+Outputs predicted vs GT action `.npy` files to `ckpt_dir`.
+
+**b) Online evaluation (real-time robot inference):**
+
+```bash
+cd act
+python policy_inference.py eval_online \
+  --ckpt_dir ./checkpoints/my_task/<run_dir> \
+  --hand_side right \
+  --redis_ip localhost \
+  --temporal_agg
+```
+
+Toggle inference on/off with keyboard (Space = send, H = hold position).
+
+**c) (Optional) Robot initialization with data initial pose:**
+
+```bash
+cd act
+python policy_inference.py init_pose \
+  --dataset /path/to/dataset.hdf5 \
+  --episode 0 \
+  --hand_side right \
+  --redis_ip localhost \
+  --ramp_seconds 3.0
+```
+
+Publishes a fixed body+hand action from the dataset and holds until Ctrl-C.
+Use before `eval_online` to initialize the robot.
