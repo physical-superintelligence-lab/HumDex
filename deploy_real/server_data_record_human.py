@@ -252,7 +252,7 @@ def _try_import_wuji_retargeting():
         return None, None
 
 
-def _try_import_training():
+def _try_import_geort():
     """
     Lazy import GeoRT model package from repo's `wuji_retarget/`.
     Returns training module or None.
@@ -655,7 +655,7 @@ def main() -> int:
                             _warned_local_wuji = True
                             print("[WARN] Local wuji retarget initialization failed; action_wuji_qpos_target_* generation will be skipped.")
                     if bool(int(args.local_wuji_use_model)) and training_mod is None:
-                        training_mod = _try_import_training()
+                        training_mod = _try_import_geort()
                         if training_mod is None and (not _warned_local_wuji):
                             _warned_local_wuji = True
                             print("[WARN] Local wuji model initialization failed (cannot import training); action_wuji_qpos_target_* generation will be skipped.")
