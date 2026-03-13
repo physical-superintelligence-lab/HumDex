@@ -362,6 +362,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_samples", type=int, default=20000)
     parser.add_argument("--batch_size", type=int, default=2048)
     parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--epoch", type=int, default=500)
 
     # checkpoint interval
     parser.add_argument("--save_every", type=int, default=10)
@@ -382,6 +383,7 @@ if __name__ == "__main__":
         n_samples=args.n_samples,
         batch_size=args.batch_size,
         lr=args.lr,
+        epoch=args.epoch,
         save_every=args.save_every,
         ckpt_root=args.ckpt_root,
     )

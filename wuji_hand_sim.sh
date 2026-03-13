@@ -3,12 +3,13 @@ cd deploy_real
 
 # Runtime configuration
 redis_ip="localhost"
-hand_side="left"  # "left" or "right"
+hand_side="right"  # "left" or "right"
 target_fps=50
-glove="manus"      # "manus" or "vdhand"
+glove="vdhand"      # "manus" or "vdhand"
 retarget_config="${SCRIPT_DIR}/wuji-retargeting/example/config/retarget_${glove}_${hand_side}.yaml"
-policy_tag="geort_wuji_left"
-policy_epoch=-1
+# Keep GeoRT args for optional use_model mode.
+policy_tag="wuji_right_000"
+policy_epoch=200
 
 # Start controller
 python ../deploy_real/server_wuji_hand_sim_redis.py \

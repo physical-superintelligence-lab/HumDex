@@ -365,11 +365,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--local_wuji_clamp_max", type=float, default=1.5, help="Maximum clamp value for model output")
     p.add_argument("--local_wuji_max_delta_per_step", type=float, default=0.08, help="Maximum per-step output delta for model output")
 
-    # vision (realsense only per requirement)
+    # vision
     p.add_argument("--rs_w", type=int, default=640)
     p.add_argument("--rs_h", type=int, default=480)
     p.add_argument("--rs_fps", type=int, default=30)
     p.add_argument("--rs_depth", action="store_true")
+    p.add_argument("--no_realsense", action="store_true", help="Disable RealSense and record Redis-only data")
 
     # vdmocap teleop (as subprocess). Keep old xdmocap flags as aliases.
     p.add_argument("--start_vdmocap", "--start_xdmocap", dest="start_vdmocap", action="store_true", help="Start vdmocap_teleop.sh in background")
@@ -481,25 +482,33 @@ def main() -> int:
     if bool(args.start_wuji):
         print("[WARN] --start_wuji is ignored: this is a record-only script and never starts Wuji hand control.")
 
-    # Vision (RealSense direct)
-    try:
-        vision = RealSenseVisionSource(width=int(args.rs_w), height=int(args.rs_h), fps=int(args.rs_fps), enable_depth=bool(args.rs_depth))
-    except Exception as e:
-        print(f"[ERROR] RealSense initialization failed: {e}")
-        if xdm_proc is not None:
-            try:
-                os.killpg(os.getpgid(xdm_proc.pid), signal.SIGTERM)
-            except Exception:
-                pass
-        return 3
+    # Vision (optional RealSense)
+    vision = None
+    if not bool(args.no_realsense):
+        try:
+            vision = RealSenseVisionSource(
+                width=int(args.rs_w),
+                height=int(args.rs_h),
+                fps=int(args.rs_fps),
+                enable_depth=bool(args.rs_depth),
+            )
+        except Exception as e:
+            print(f"[ERROR] RealSense initialization failed: {e}")
+            if xdm_proc is not None:
+                try:
+                    os.killpg(os.getpgid(xdm_proc.pid), signal.SIGTERM)
+                except Exception:
+                    pass
+            return 3
 
     # Recorder (schema: compatible superset of data_record.sh + keyboard recorder)
     task_dir = os.path.join(str(args.data_folder), str(args.task_name))
+    data_keys = ["rgb"] if vision is not None else []
     recorder = EpisodeWriter(
         task_dir=task_dir,
         frequency=int(args.frequency),
         image_shape=(int(args.rs_h), int(args.rs_w), 3),
-        data_keys=["rgb"],
+        data_keys=data_keys,
     )
 
     suffix = str(args.robot_key)
@@ -536,12 +545,14 @@ def main() -> int:
     signal.signal(signal.SIGTERM, _handle_sig)
 
     print("=" * 70)
-    print("VDMocap/Redis + RealSense Recorder (record-only)")
+    print("VDMocap/Redis Recorder (record-only)")
     print("=" * 70)
     print(f"- save_to: {task_dir}")
     print(f"- channel: {args.channel}")
     print(f"- redis: {args.redis_ip}:{args.redis_port}  suffix={suffix}")
-    print(f"- rs: {args.rs_w}x{args.rs_h}@{args.rs_fps} depth={bool(args.rs_depth)}")
+    print(f"- realsense: {not bool(args.no_realsense)}")
+    if not bool(args.no_realsense):
+        print(f"- rs: {args.rs_w}x{args.rs_h}@{args.rs_fps} depth={bool(args.rs_depth)}")
     print(f"- start_vdmocap: {bool(args.start_vdmocap)}")
     print(f"- record_on_start: {bool(args.record_on_start)}")
     print("Keys: r=start/stop, q=quit (note: keyboard control is unavailable with --no_window)")
@@ -570,7 +581,10 @@ def main() -> int:
     try:
         while not stop_requested:
             t0 = time.time()
-            rgb = vision.get_rgb()
+            if vision is not None:
+                rgb = vision.get_rgb()
+            else:
+                rgb = np.zeros((int(args.rs_h), int(args.rs_w), 3), dtype=np.uint8)
 
             if not args.no_window:
                 overlay = rgb.copy()
@@ -603,10 +617,11 @@ def main() -> int:
 
             if recording:
                 data: Dict[str, Any] = {"idx": step_count}
-                data["rgb"] = rgb
-                data["t_img"] = now_ms()
+                if vision is not None:
+                    data["rgb"] = rgb
+                    data["t_img"] = now_ms()
                 data["t_record_ms"] = now_ms()
-                if bool(args.rs_depth):
+                if vision is not None and bool(args.rs_depth):
                     depth = vision.get_depth()
                     data["depth"] = depth.tolist() if depth is not None else None
 
@@ -783,7 +798,8 @@ def main() -> int:
         except Exception:
             pass
         try:
-            vision.close()
+            if vision is not None:
+                vision.close()
         except Exception:
             pass
         try:

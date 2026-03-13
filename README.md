@@ -22,7 +22,7 @@ By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
 
 ## Installation
 
-We will have two conda environments for Humdex. One is called `humdex`, which can be used for controller training, controller deployment, and teleop data collection. The other is called `gmr`, which can be used for online motion retargeting.
+We will have three conda environments for Humdex. The first is called `humdex`, which can be used for controller training, controller deployment, and teleop data collection. The second is called `gmr`, which can be used for online motion retargeting. The third is called `geort`, which can be used for wuji hand training.
 
 ### 1) Create `gmr` Environment
 
@@ -63,7 +63,20 @@ For the rest of `humdex` environment setup, follow TWIST2 README:
 - [Step 3: Install Packages](https://github.com/LiangHeng121/TWIST2?tab=readme-ov-file#step-3-install-packages)
 - [Step 4: Install Unitree SDK2 for Laptop Sim2Real](https://github.com/LiangHeng121/TWIST2?tab=readme-ov-file#step-4-install-unitree-sdk2-for-laptop-sim2real)
 
-### 3) Clone `GR00T-WholeBodyControl` (for sonic)
+### 3) Create `geort` Environment
+
+Use a dedicated environment for Wuji hand policy training:
+
+```bash
+conda create -n geort python=3.10 -y
+conda activate geort
+
+cd wuji_policy
+pip install -r requirements.txt
+pip install -e .
+```
+
+### 4) Clone `GR00T-WholeBodyControl` (for sonic)
 
 ```bash
 cd ..
@@ -76,125 +89,6 @@ Then follow the official [doc](https://nvlabs.github.io/GR00T-WholeBodyControl/)
 
 ---
 
-## Wuji Policy (GeoRT)
-
-### 1) Install
-
-```bash
-conda activate humdex
-cd wuji_policy
-pip install -r requirements.txt
-pip install -e .
-```
-
-### 2) Build training `.npz` from collected data
-
-Data conversion entry is:
-- `deploy_real/wuji_data_collect.py`
-
-Current CLI interface:
-- `--input_root`: root directory containing `**/episode_*/data.json`
-- `--output_name`: output NPZ name (with or without `.npz`)
-- `--hand_side`: `left` / `right` / `both`
-- `--max_files`: max number of `data.json` files to process (`-1` means all)
-
-Default behavior (without args):
-- input root: `deploy_real/twist2_demonstration`
-- output file: `wuji_policy/data/wuji_geort_merged.npz`
-- hand side: `right`
-
-Recommended usage:
-
-```bash
-conda activate humdex
-cd deploy_real
-python wuji_data_collect.py \
-  --input_root ./twist2_demonstration \
-  --output_name wuji_right \
-  --hand_side right \
-  --max_files -1
-```
-
-This generates:
-- `wuji_policy/data/wuji_right.npz`
-
-Quick wrapper (same defaults, supports extra arg overrides):
-
-```bash
-bash wuji_data_collect.sh
-```
-
-If you need both hands in one dataset:
-
-```bash
-python wuji_data_collect.py \
-  --input_root ./twist2_demonstration \
-  --output_name wuji_both \
-  --hand_side both
-```
-
-### 3) Train (supervised)
-
-Data format (`.npz`) used by `wuji_policy/geort/trainer.py`:
-- required key: `fingertips_rel_wrist` with shape `[T, 5, 3]` (or `[T, 5, >=3]`)
-- supervision key: `qpos` (recommended), or `robot_qpos`, `joint`, `joint_angle`, `joint_angles`
-
-Example:
-
-```bash
-cd wuji_policy
-python geort/trainer.py \
-  -hand wuji_right \
-  -human_data wuji_right \
-  -ckpt_tag geort_wuji \
-  --qpos_key qpos \
-  --n_samples 20000 \
-  --batch_size 2048 \
-  --lr 1e-4 \
-  --save_every 10 \
-  --ckpt_root ./checkpoint
-```
-
-`-human_data` should match the output NPZ stem in `wuji_policy/data` (e.g., `wuji_right` for `wuji_right.npz`).
-
-For left hand, replace `wuji_right` with `wuji_left`.
-
-### 4) Inference (model-based vs optimal-based)
-
-Both `wuji_policy/server_wuji_hand_redis.py` and `wuji_policy/deploy2.py` support:
-- `--use_model`: model-based (GeoRT)
-- default (without it): optimal-based (`WujiHandRetargeter`)
-
-Checkpoint aliases:
-- `--checkpoint filter` -> `geort_filter_wuji`
-- `--checkpoint filter_v2` -> `geort_filter_wuji_2`
-
-You can override alias by setting `--policy_tag`.
-
-Example (model-based):
-
-```bash
-cd wuji_policy
-python server_wuji_hand_redis.py \
-  --hand_side right \
-  --use_model \
-  --checkpoint filter \
-  --policy_epoch -1
-```
-
-Example (optimal-based):
-
-```bash
-cd wuji_policy
-python server_wuji_hand_redis.py \
-  --hand_side right
-```
-
-Checkpoint location:
-- `wuji_policy/checkpoint/<your_tag_or_run_name>/`
-- each checkpoint folder should contain at least `config.json` and `last.pth` (or `epoch_*.pth`)
-
----
 ## Teleop
 
 For a concise end-to-end setup flow, see [`doc/teleop.md`](doc/teleop.md).
@@ -342,6 +236,18 @@ bash data_record_human.sh
 
 # sonic channel
 bash data_record_human.sh --channel sonic
+
+# just collect hand data
+bash data_record_human.sh --use_realsense 0
+```
+
+### 4) Build Wuji Hand Policy Training NPZ
+
+If you want to obtain hand training data, you need to run this conversion step.
+
+```bash
+# session_dir_name hand_side output_name
+bash build_wuji_hand_policy_data.sh right_hand_000 right wuji_right_000
 ```
 
 ---
@@ -422,6 +328,20 @@ python imitate_episodes.py \
 `--resume --ckpt_dir ./checkpoints/my_task/<run_dir>`: resume from checkpoint.
 
 Checkpoint location: `<ckpt_root>/<task_name>/<timestamp>/`
+
+**Wuji hand retarget model training:**
+
+```bash
+cd ..
+# default: wuji_policy/data/wuji_right_000.npz -> checkpoint tag wuji_right_000
+bash wuji_hand_training.sh
+```
+
+Edit top variables in `wuji_hand_training.sh` to switch dataset/tag/hyperparameters:
+- `human_data_name`
+- `hand_config` (`wuji_right` / `wuji_left`)
+- `ckpt_tag`
+- `epoch`, `n_samples`, `batch_size`, `lr`, `save_every`
 
 ### 4) Policy Inference
 
