@@ -407,7 +407,7 @@ def main():
     parser.add_argument("--axis_flip", type=str, default="", help="Axis flips (e.g. x, yz)")
     parser.add_argument("--use_bvh_skeleton", action="store_true", help="Use BVH offsets as skeleton")
     parser.add_argument("--use_bvh_lengths_only", action="store_true", help="Use BVH bone lengths but keep STD directions")
-    parser.add_argument("--bvh_path", type=str, default="/home/heng/heng/G1/TWIST2/walk1_subject1.bvh", help="BVH path for offsets")
+    parser.add_argument("--bvh_path", type=str, default="", help="BVH path for offsets")
     parser.add_argument("--bvh_scale", type=float, default=1.0, help="Scale BVH offsets")
     parser.add_argument("--mpl_backend", type=str, default="", help="Matplotlib backend override (e.g. TkAgg)")
     parser.add_argument("--save_png", action="store_true", help="Save frames as PNG when no GUI")

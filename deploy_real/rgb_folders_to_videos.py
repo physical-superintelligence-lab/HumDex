@@ -108,7 +108,7 @@ def main() -> None:
         type=str,
         nargs="+",
         required=True,
-        help="One or more twist2_demonstration/<timestamp> directories containing episode_XXXX/rgb/",
+        help="One or more humdex_demonstration/<timestamp> directories containing episode_XXXX/rgb/",
     )
     parser.add_argument(
         "--fps",

@@ -14,7 +14,7 @@ VDMocap/VDHand product page:
 
 Please wear sensors and gloves according to the official wearing tutorial video.
 
-- Wearing video: **TBD (placeholder, to be added later)**
+- Wearing video: [YouTube](https://youtu.be/1urOMXukJVc)
 
 
 ## 2. Windows Software Installation and Setup

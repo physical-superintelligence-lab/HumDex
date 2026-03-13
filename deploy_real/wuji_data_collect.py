@@ -5,7 +5,7 @@
 One-click builder for Wuji / GeoRT supervised training data.
 
 Input:
-- deploy_real/twist2_demonstration/**/episode_*/data.json
+- deploy_real/humdex_demonstration/**/episode_*/data.json
 
 Pipeline:
 1. Read per frame:
@@ -47,7 +47,7 @@ def _repo_root() -> Path:
 
 
 PROJECT_ROOT = _repo_root()
-DEFAULT_INPUT_ROOT = PROJECT_ROOT / "deploy_real" / "twist2_demonstration"
+DEFAULT_INPUT_ROOT = PROJECT_ROOT / "deploy_real" / "humdex_demonstration"
 DEFAULT_OUT_DIR = PROJECT_ROOT / "wuji_policy" / "data"
 
 # source/output keys
@@ -331,13 +331,13 @@ def _build_one_episode_side(
 
 def _parse_args():
     parser = argparse.ArgumentParser(
-        description="Build one merged GeoRT/Wuji supervised dataset directly from twist2_demonstration data.json files."
+        description="Build one merged GeoRT/Wuji supervised dataset directly from humdex_demonstration data.json files."
     )
     parser.add_argument(
         "--input_root",
         type=str,
         default=str(DEFAULT_INPUT_ROOT),
-        help="Root directory of twist2_demonstration.",
+        help="Root directory of humdex_demonstration.",
     )
     parser.add_argument(
         "--output_name",

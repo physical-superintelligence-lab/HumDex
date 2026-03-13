@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Policy Inference for TWIST2.
+Policy Inference for HumDex.
 
 Modes:
     1. replay  - Replay GT actions from HDF5 dataset (for testing pipeline)
@@ -2448,7 +2448,7 @@ def publish_initial_action_from_dataset(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="TWIST2 Policy Inference",
+        description="HumDex Policy Inference",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     subparsers = parser.add_subparsers(dest='mode', required=True)

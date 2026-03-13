@@ -1,4 +1,4 @@
-"""Redis I/O utilities for TWIST2 robot state reading and action publishing."""
+"""Redis I/O utilities for HumDex robot state reading and action publishing."""
 
 import json
 import time

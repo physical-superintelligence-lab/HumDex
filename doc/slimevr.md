@@ -23,6 +23,6 @@ In the **Tracker Assignment** page, assign each tracker to its body location and
 
 ## 4. Enable VMC Output
 
-Open **Settings -> OSC -> VMC**, enable VMC output, enter the receiver IP address, and load a VRM model from [link](https://drive.google.com/file/d/1NTBgcI1i2YHSWyou3YLVcTV2SAjxu7c8/view?usp=sharing).
+Open **Settings -> OSC -> VMC**, enable VMC output and enter the receiver IP address.
 
 <img src="../assets/slimevr/vmc.jpg" alt="SlimeVR VMC settings page" width="720" />
