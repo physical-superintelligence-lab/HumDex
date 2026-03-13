@@ -3,12 +3,12 @@
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 script_dir=$(dirname $(realpath $0))
-# motion_file="${script_dir}/assets/example_motions/0807_yanjie_walk_005.pkl"
-motion_file="${script_dir}/assets/example_motions/0807_yanjie_walk_001.pkl"
+# motion_file="${script_dir}/../assets/example_motions/0807_yanjie_walk_005.pkl"
+motion_file="${script_dir}/../assets/example_motions/0807_yanjie_walk_001.pkl"
 
 
 # Change to deploy_real directory
-cd deploy_real
+cd "${script_dir}/../deploy_real"
 
 # by default we use our own laptop as the redis server
 redis_ip="localhost"

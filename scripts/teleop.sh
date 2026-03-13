@@ -2,14 +2,14 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="${SCRIPT_DIR}"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 usage() {
   cat <<'EOF'
 Unified Teleop Entry (v2)
 
 Usage:
-  bash teleop.sh [options] [-- extra_args_for_target_scripts]
+  bash scripts/teleop.sh [options] [-- extra_args_for_target_scripts]
 
 Options:
   --policy {twist2|sonic}            default: twist2
@@ -23,9 +23,9 @@ Options:
   -h, --help
 
 Examples:
-  bash teleop.sh
-  bash teleop.sh --policy sonic --body slimevr --hand manus
-  bash teleop.sh --policy sonic --body_source vdmocap --hand_source vdhand -- --redis_ip localhost
+  bash scripts/teleop.sh
+  bash scripts/teleop.sh --policy sonic --body slimevr --hand manus
+  bash scripts/teleop.sh --policy sonic --body_source vdmocap --hand_source vdhand -- --redis_ip localhost
 EOF
 }
 

@@ -97,7 +97,7 @@ For a concise end-to-end setup flow, see [`doc/teleop.md`](doc/teleop.md).
 ```bash
 conda activate gmr
 
-bash teleop.sh [options] [-- extra_args]
+bash scripts/teleop.sh [options] [-- extra_args]
 ```
 
 Supported selectors:
@@ -111,19 +111,19 @@ Supported selectors:
 Run default combo:
 
 ```bash
-bash teleop.sh
+bash scripts/teleop.sh
 ```
 
 Run sonic + vdmocap + manus:
 
 ```bash
-bash teleop.sh --policy sonic --body vdmocap --hand manus
+bash scripts/teleop.sh --policy sonic --body vdmocap --hand manus
 ```
 
 Run twist2 + slimevr + vdhand:
 
 ```bash
-bash teleop.sh --policy twist2 --body slimevr --hand vdhand
+bash scripts/teleop.sh --policy twist2 --body slimevr --hand vdhand
 ```
 
 ### 3) Config Files
@@ -157,8 +157,8 @@ Config Structure:
 ## for --policy twist2
 conda activate humdex
 # Warm arp the redis server at first time
-bash run_motion_server.sh
-bash sim2sim.sh
+bash scripts/run_motion_server.sh
+bash scripts/sim2sim.sh
 
 
 
@@ -179,9 +179,9 @@ bash deploy.sh sim --input-type zmq
 ```bash
 ## for --policy twist2
 conda activate humdex
-bash run_motion_server.sh
-# edit `net` in `sim2real.sh` to your real NIC name before running
-bash sim2real.sh
+bash scripts/run_motion_server.sh
+# edit `net` in `scripts/sim2real.sh` to your real NIC name before running
+bash scripts/sim2real.sh
 
 
 
@@ -201,14 +201,14 @@ For Wuji device setup details, see [`doc/wuji.md`](doc/wuji.md).
 
 ```bash
 conda activate humdex
-bash wuji_hand_sim.sh
+bash scripts/wuji_hand_sim.sh
 ```
 
 ### 2) Real Hand Controller
 
 ```bash
 conda activate humdex
-bash wuji_hand_real.sh
+bash scripts/wuji_hand_real.sh
 ```
 
 ---

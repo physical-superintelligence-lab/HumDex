@@ -1,7 +1,7 @@
 SCRIPT_DIR=$(dirname $(realpath $0))
-ckpt_path=${SCRIPT_DIR}/assets/ckpts/twist2_1017_20k.onnx
+ckpt_path=${SCRIPT_DIR}/../assets/ckpts/twist2_1017_20k.onnx
 
-cd deploy_real
+cd "${SCRIPT_DIR}/../deploy_real"
 
 python server_low_level_g1_sim.py \
     --xml ../assets/g1/g1_sim2sim_29dof.xml \
