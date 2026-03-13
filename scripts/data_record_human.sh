@@ -13,6 +13,7 @@ body_zmq_topic="pose"
 data_frequency=30
 task_name_base=$(date +"%Y%m%d_%H%M")
 task_name="${task_name_base}_${channel}"
+use_realsense=1
 
 
 python server_data_record_human.py \
@@ -23,7 +24,5 @@ python server_data_record_human.py \
   --task_name "${task_name}" \
   --redis_ip "${redis_ip}" \
   --frequency "${data_frequency}" \
-  --rs_w 640 \
-  --rs_h 480 \
-  --rs_fps 30 \
+  $(if [ "${use_realsense}" -eq 1 ]; then echo "--rs_w 640 --rs_h 480 --rs_fps 30"; else echo "--no_realsense"; fi) \
   "$@"
