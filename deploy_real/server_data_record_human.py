@@ -252,16 +252,16 @@ def _try_import_wuji_retargeting():
         return None, None
 
 
-def _try_import_geort():
+def _try_import_training():
     """
-    Lazy import GeoRT model package from repo's `wuji_retarget/`.
+    Lazy import training model package from repo's `wuji_retarget/`.
     Returns training module or None.
     """
     try:
         project_root = Path(__file__).resolve().parents[1]
-        geort_root = project_root / "wuji_retarget"
-        if str(geort_root) not in sys.path:
-            sys.path.insert(0, str(geort_root))
+        training_root = project_root / "wuji_retarget"
+        if str(training_root) not in sys.path:
+            sys.path.insert(0, str(training_root))
         import training  # type: ignore
 
         return training
@@ -350,11 +350,11 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--local_wuji_write_redis", type=int, default=1, help="Write local retarget output back to Redis (0/1)")
 
-    # local wuji mode: DexPilot retarget (default) vs GeoRT model inference
-    p.add_argument("--local_wuji_use_model", type=int, default=0, help="Use GeoRT model inference for local wuji target generation (0/1, default=0)")
+    # local wuji mode: DexPilot retarget (default) vs training model inference
+    p.add_argument("--local_wuji_use_model", type=int, default=0, help="Use training model inference for local wuji target generation (0/1, default=0)")
     # Keep argument names aligned with deploy2.py / wuji_hand_model_deploy.sh.
-    p.add_argument("--local_wuji_policy_tag", type=str, default="geort_filter_wuji", help="Local GeoRT model tag (--local_wuji_use_model=1)")
-    p.add_argument("--local_wuji_policy_epoch", type=int, default=-1, help="Local GeoRT model epoch (--local_wuji_use_model=1)")
+    p.add_argument("--local_wuji_policy_tag", type=str, default="training_filter_wuji", help="Local training model tag (--local_wuji_use_model=1)")
+    p.add_argument("--local_wuji_policy_epoch", type=int, default=-1, help="Local training model epoch (--local_wuji_use_model=1)")
     p.add_argument("--local_wuji_policy_tag_left", type=str, default="", help="Left-hand tag (optional; empty uses local_wuji_policy_tag)")
     p.add_argument("--local_wuji_policy_epoch_left", type=int, default=-999999, help="Left-hand epoch (optional; -999999 uses local_wuji_policy_epoch)")
     p.add_argument("--local_wuji_policy_tag_right", type=str, default="", help="Right-hand tag (optional; empty uses local_wuji_policy_tag)")
@@ -655,7 +655,7 @@ def main() -> int:
                             _warned_local_wuji = True
                             print("[WARN] Local wuji retarget initialization failed; action_wuji_qpos_target_* generation will be skipped.")
                     if bool(int(args.local_wuji_use_model)) and training_mod is None:
-                        training_mod = _try_import_geort()
+                        training_mod = _try_import_training()
                         if training_mod is None and (not _warned_local_wuji):
                             _warned_local_wuji = True
                             print("[WARN] Local wuji model initialization failed (cannot import training); action_wuji_qpos_target_* generation will be skipped.")
@@ -687,7 +687,7 @@ def main() -> int:
                         mp21 = hand_26d_to_mediapipe_21d(hand_dict, hand_side=s)
                         mp_trans = apply_mediapipe_transformations(mp21, hand_type=s)
 
-                        # Choose DexPilot retarget (default) vs GeoRT model inference
+                        # Choose DexPilot retarget (default) vs training model inference
                         if bool(int(args.local_wuji_use_model)):
                             if training_mod is None:
                                 return
