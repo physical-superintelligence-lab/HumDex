@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       // GitHub project pages for LiangHeng121/HumDex_page2.
-      base: '/HumDex_page2/',
+      base: '/humdex/',
       server: {
         port: 3000,
         host: '0.0.0.0',
