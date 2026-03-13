@@ -220,7 +220,7 @@ bash wuji_hand_real.sh
 
 ```bash
 conda activate humdex
-bash wuji_data_collect.sh
+bash scripts/wuji_data_collect.sh
 ```
 
 This generates:
@@ -274,25 +274,25 @@ For robot/human recording workflow and saved data layout, see [`doc/data_collect
 ### 1) Start Camera Stream on g1
 
 ```bash
-bash realsense_zmq_pub_g1.sh
+bash scripts/realsense_zmq_pub_g1.sh
 ```
 
-### 2) Keyboard Data Recording
+### 2) Teleop Data Recording
 
 ```bash
-bash data_record.sh
+bash scripts/data_record.sh
 
 # sonic channel
-bash data_record.sh --channel sonic
+bash scripts/data_record.sh --channel sonic
 ```
 
 ### 3) Human Data Recording
 
 ```bash
-bash data_record_human.sh
+bash scripts/data_record_human.sh
 
 # sonic channel
-bash data_record_human.sh --channel sonic
+bash scripts/data_record_human.sh --channel sonic
 ```
 
 ---

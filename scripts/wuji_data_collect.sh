@@ -2,10 +2,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "${SCRIPT_DIR}/deploy_real"
+cd "${SCRIPT_DIR}/../deploy_real"
 
 # Runtime configuration
-input_root="${SCRIPT_DIR}/deploy_real/humdex_demonstration"        # root directory containing `**/episode_*/data.json`
+input_root="${SCRIPT_DIR}/../deploy_real/humdex_demonstration"     # root directory containing `**/episode_*/data.json`
 output_name="wuji_right"                                           # output NPZ file name
 hand_side="right"                                                  # which hand side to export: left, right, or both
 max_files=-1                                                       # max number of `data.json` files to process (`-1` means all)

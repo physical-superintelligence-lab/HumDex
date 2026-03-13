@@ -27,7 +27,7 @@ After the environment is ready, start the camera publisher with:
 
 ```bash
 # from local workstation
-bash realsense_zmq_pub_g1.sh
+bash scripts/realsense_zmq_pub_g1.sh
 ```
 
 ### 1.2 Start Teleop
@@ -39,10 +39,10 @@ Start teleoperation first, following [`teleop.md`](teleop.md).
 Use the keyboard recorder:
 
 ```bash
-bash data_record.sh
+bash scripts/data_record.sh
 
 # sonic channel
-bash data_record.sh --channel sonic
+bash scripts/data_record.sh --channel sonic
 ```
 
 
@@ -64,10 +64,10 @@ Start teleoperation first, following [`teleop.md`](teleop.md).
 Use the human recorder:
 
 ```bash
-bash data_record_human.sh
+bash scripts/data_record_human.sh
 
 # sonic channel
-bash data_record_human.sh --channel sonic
+bash scripts/data_record_human.sh --channel sonic
 ```
 
 
