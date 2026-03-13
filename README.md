@@ -57,18 +57,17 @@ conda activate humdex
 cd wuji-retargeting
 git submodule update --init --recursive
 pip install -r requirements.txt
-pip install -e .
+pip install -e . && cd ..
 
 # install wuji_policy
 cd wuji_policy
 pip install -r requirements.txt
-pip install -e .
+pip install -e . && cd ..
 
 # install for act
 cd act
 pip install -r requirements.txt
-
-pip install pyrealsense2
+cd ..
 ```
 
 For the rest of `humdex` environment setup, follow TWIST2 README:
