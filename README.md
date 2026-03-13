@@ -1,7 +1,9 @@
 # HumDex: Humanoid Dexterous Manipulation Made Easy
 By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
 
-![Banner for HumDex](./assets/demo.gif)
+<p align="center">
+  <img src="./assets/demo.gif" alt="Banner for HumDex" width="90%">
+</p>
 
 <p align="center">
   <a href="https://psi-lab.ai/humdex"><img src="https://img.shields.io/badge/project-page-brightgreen" alt="Project Page"></a>
