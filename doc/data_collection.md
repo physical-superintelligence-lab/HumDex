@@ -36,7 +36,7 @@ Start teleoperation first, following [`teleop.md`](teleop.md).
 
 ### 1.3 Start Robot Data Recording
 
-Use the keyboard recorder:
+Use the teleop recorder:
 
 ```bash
 bash scripts/data_record.sh
