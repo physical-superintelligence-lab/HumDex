@@ -12,11 +12,12 @@ By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
 ## Content Table
 
 - [Installation](#installation)
-- [Wuji Policy](#wuji-policy-geort)
 - [Teleop](#teleop)
 - [G1 Controller](#g1-controller)
 - [Wuji Hand Controller](#wuji-hand-controller)
+- [Wuji Policy](#wuji-policy)
 - [Data Collection](#data-collection)
+- [Policy Learning](#policy-learning)
 
 ---
 
@@ -48,11 +49,19 @@ conda create -n humdex python=3.8 -y
 conda activate humdex
 
 # install wuji-retargeting
-
 cd wuji-retargeting
 git submodule update --init --recursive
 pip install -r requirements.txt
 pip install -e .
+
+# install wuji_policy
+cd wuji_policy
+pip install -r requirements.txt
+pip install -e .
+
+# install for act
+cd act
+pip install -r requirements.txt
 
 pip install pyrealsense2
 ```
@@ -76,125 +85,6 @@ Then follow the official [doc](https://nvlabs.github.io/GR00T-WholeBodyControl/)
 
 ---
 
-## Wuji Policy (GeoRT)
-
-### 1) Install
-
-```bash
-conda activate humdex
-cd wuji_policy
-pip install -r requirements.txt
-pip install -e .
-```
-
-### 2) Build training `.npz` from collected data
-
-Data conversion entry is:
-- `deploy_real/wuji_data_collect.py`
-
-Current CLI interface:
-- `--input_root`: root directory containing `**/episode_*/data.json`
-- `--output_name`: output NPZ name (with or without `.npz`)
-- `--hand_side`: `left` / `right` / `both`
-- `--max_files`: max number of `data.json` files to process (`-1` means all)
-
-Default behavior (without args):
-- input root: `deploy_real/twist2_demonstration`
-- output file: `wuji_policy/data/wuji_geort_merged.npz`
-- hand side: `right`
-
-Recommended usage:
-
-```bash
-conda activate humdex
-cd deploy_real
-python wuji_data_collect.py \
-  --input_root ./twist2_demonstration \
-  --output_name wuji_right \
-  --hand_side right \
-  --max_files -1
-```
-
-This generates:
-- `wuji_policy/data/wuji_right.npz`
-
-Quick wrapper (same defaults, supports extra arg overrides):
-
-```bash
-bash wuji_data_collect.sh
-```
-
-If you need both hands in one dataset:
-
-```bash
-python wuji_data_collect.py \
-  --input_root ./twist2_demonstration \
-  --output_name wuji_both \
-  --hand_side both
-```
-
-### 3) Train (supervised)
-
-Data format (`.npz`) used by `wuji_policy/geort/trainer.py`:
-- required key: `fingertips_rel_wrist` with shape `[T, 5, 3]` (or `[T, 5, >=3]`)
-- supervision key: `qpos` (recommended), or `robot_qpos`, `joint`, `joint_angle`, `joint_angles`
-
-Example:
-
-```bash
-cd wuji_policy
-python geort/trainer.py \
-  -hand wuji_right \
-  -human_data wuji_right \
-  -ckpt_tag geort_wuji \
-  --qpos_key qpos \
-  --n_samples 20000 \
-  --batch_size 2048 \
-  --lr 1e-4 \
-  --save_every 10 \
-  --ckpt_root ./checkpoint
-```
-
-`-human_data` should match the output NPZ stem in `wuji_policy/data` (e.g., `wuji_right` for `wuji_right.npz`).
-
-For left hand, replace `wuji_right` with `wuji_left`.
-
-### 4) Inference (model-based vs optimal-based)
-
-Both `wuji_policy/server_wuji_hand_redis.py` and `wuji_policy/deploy2.py` support:
-- `--use_model`: model-based (GeoRT)
-- default (without it): optimal-based (`WujiHandRetargeter`)
-
-Checkpoint aliases:
-- `--checkpoint filter` -> `geort_filter_wuji`
-- `--checkpoint filter_v2` -> `geort_filter_wuji_2`
-
-You can override alias by setting `--policy_tag`.
-
-Example (model-based):
-
-```bash
-cd wuji_policy
-python server_wuji_hand_redis.py \
-  --hand_side right \
-  --use_model \
-  --checkpoint filter \
-  --policy_epoch -1
-```
-
-Example (optimal-based):
-
-```bash
-cd wuji_policy
-python server_wuji_hand_redis.py \
-  --hand_side right
-```
-
-Checkpoint location:
-- `wuji_policy/checkpoint/<your_tag_or_run_name>/`
-- each checkpoint folder should contain at least `config.json` and `last.pth` (or `epoch_*.pth`)
-
----
 ## Teleop
 
 For a concise end-to-end setup flow, see [`doc/teleop.md`](doc/teleop.md).
@@ -252,7 +142,7 @@ Config Structure:
 ### 4) Keyboard Behavior
 
 - `k`: toggle send/default mode
-- `p`: toggle hold mode
+- `p`: toggle send/hold mode
 
 ---
 
@@ -266,6 +156,8 @@ conda activate humdex
 # Warm arp the redis server at first time
 bash run_motion_server.sh
 bash sim2sim.sh
+
+
 
 ## for --policy sonic
 # Terminal 1 — MuJoCo simulator
@@ -287,6 +179,8 @@ conda activate humdex
 bash run_motion_server.sh
 # edit `net` in `sim2real.sh` to your real NIC name before running
 bash sim2real.sh
+
+
 
 ## for --policy sonic
 cd ../GR00T-WholeBodyControl/gear_sonic_deploys
@@ -313,6 +207,60 @@ bash wuji_hand_sim.sh
 conda activate humdex
 bash wuji_hand_real.sh
 ```
+
+---
+
+## Wuji Policy
+
+
+### 1) Build training `.npz` from collected data
+
+```bash
+conda activate humdex
+bash wuji_data_collect.sh
+```
+
+This generates:
+- `wuji_policy/data/wuji_right.npz`
+
+### 2) Training
+
+Data format (`.npz`) used by `wuji_policy/geort/trainer.py`:
+- required key: `fingertips_rel_wrist` with shape `[T, 5, 3]`
+- supervision key: `qpos`
+
+Example:
+
+```bash
+cd wuji_policy
+python geort/trainer.py \
+  -hand wuji_right \
+  -human_data wuji_right \
+  -ckpt_tag geort_wuji \
+  --qpos_key qpos \
+  --n_samples 20000 \
+  --batch_size 2048 \
+  --lr 1e-4 \
+  --save_every 10 \
+  --ckpt_root ./checkpoint
+```
+
+`-human_data` should match the output NPZ stem in `wuji_policy/data` (e.g., `wuji_right` for `wuji_right.npz`).
+
+For left hand, replace `wuji_right` with `wuji_left`.
+
+### 3) Inference
+
+The scripts in [Wuji Hand Controller](#wuji-hand-controller) use `wuji-retargeting` by default.
+To use a trained policy instead:
+
+1. In `wuji_hand_real.sh` and `wuji_hand_sim.sh`, set:
+   - `policy_tag` to your checkpoint tag
+   - `policy_epoch` to your checkpoint epoch (use `-1` for latest)
+2. In both scripts, uncomment:
+   - `--use_model`
+   - `--policy_tag ${policy_tag}`
+   - `--policy_epoch ${policy_epoch}`
 
 ---
 
@@ -348,15 +296,7 @@ bash data_record_human.sh --channel sonic
 
 ## Policy Learning
 
-### 1) Install
-
-```bash
-conda activate humdex
-cd act
-pip install -r requirements.txt
-```
-
-### 2) Data Processing
+### 1) Data Processing
 
 **a) Human data preprocessing:**
 
@@ -395,7 +335,7 @@ HDF5 per-episode structure:
 - `state_wuji_hand_{left,right}` (T, 20), `action_wuji_qpos_target_{left,right}` (T, 20)
 - `head` (T,) JPEG bytes
 
-### 3) Policy Training
+### 2) Policy Training
 
 ```bash
 cd act
@@ -423,7 +363,7 @@ python imitate_episodes.py \
 
 Checkpoint location: `<ckpt_root>/<task_name>/<timestamp>/`
 
-### 4) Policy Inference
+### 3) Policy Inference
 
 **a) Offline evaluation (policy + dataset observations):**
 
