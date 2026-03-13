@@ -252,19 +252,19 @@ def _try_import_wuji_retargeting():
         return None, None
 
 
-def _try_import_geort():
+def _try_import_training():
     """
     Lazy import GeoRT model package from repo's `wuji_retarget/`.
-    Returns geort module or None.
+    Returns training module or None.
     """
     try:
         project_root = Path(__file__).resolve().parents[1]
         geort_root = project_root / "wuji_retarget"
         if str(geort_root) not in sys.path:
             sys.path.insert(0, str(geort_root))
-        import geort  # type: ignore
+        import training  # type: ignore
 
-        return geort
+        return training
     except Exception:
         return None
 
@@ -568,7 +568,7 @@ def main() -> int:
     apply_mediapipe_transformations = None
     retargeter_left = None
     retargeter_right = None
-    geort = None
+    training_mod = None
     model_left = None
     model_right = None
     last_wuji_left = None
@@ -654,14 +654,14 @@ def main() -> int:
                         if (WujiHandRetargeter is None or apply_mediapipe_transformations is None) and (not _warned_local_wuji):
                             _warned_local_wuji = True
                             print("[WARN] Local wuji retarget initialization failed; action_wuji_qpos_target_* generation will be skipped.")
-                    if bool(int(args.local_wuji_use_model)) and geort is None:
-                        geort = _try_import_geort()
-                        if geort is None and (not _warned_local_wuji):
+                    if bool(int(args.local_wuji_use_model)) and training_mod is None:
+                        training_mod = _try_import_training()
+                        if training_mod is None and (not _warned_local_wuji):
                             _warned_local_wuji = True
-                            print("[WARN] Local wuji model initialization failed (cannot import geort); action_wuji_qpos_target_* generation will be skipped.")
+                            print("[WARN] Local wuji model initialization failed (cannot import training); action_wuji_qpos_target_* generation will be skipped.")
 
                     def _maybe_retarget_one(side: str) -> None:
-                        nonlocal retargeter_left, retargeter_right, geort, model_left, model_right, last_wuji_left, last_wuji_right
+                        nonlocal retargeter_left, retargeter_right, training_mod, model_left, model_right, last_wuji_left, last_wuji_right
                         if WujiHandRetargeter is None or apply_mediapipe_transformations is None:
                             return
                         s = str(side).lower()
@@ -689,7 +689,7 @@ def main() -> int:
 
                         # Choose DexPilot retarget (default) vs GeoRT model inference
                         if bool(int(args.local_wuji_use_model)):
-                            if geort is None:
+                            if training_mod is None:
                                 return
                             # per-side tag/epoch override
                             tag = str(args.local_wuji_policy_tag_left if s == "left" and str(args.local_wuji_policy_tag_left) else
@@ -702,7 +702,7 @@ def main() -> int:
                             if s == "left":
                                 if model_left is None:
                                     print(f"[local_wuji:model] loading left: tag={tag}, epoch={epoch}")
-                                    model_left = geort.load_model(tag, epoch=epoch)
+                                    model_left = training_mod.load_model(tag, epoch=epoch)
                                     try:
                                         model_left.eval()
                                     except Exception:
@@ -711,7 +711,7 @@ def main() -> int:
                             else:
                                 if model_right is None:
                                     print(f"[local_wuji:model] loading right: tag={tag}, epoch={epoch}")
-                                    model_right = geort.load_model(tag, epoch=epoch)
+                                    model_right = training_mod.load_model(tag, epoch=epoch)
                                     try:
                                         model_right.eval()
                                     except Exception:

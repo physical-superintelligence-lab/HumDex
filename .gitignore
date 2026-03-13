@@ -1,3 +1,5 @@
 GMR/
 **/__pycache__/
 deploy_real/humdex_demonstration/
+wuji_policy/data/
+wuji_policy/checkpoint/

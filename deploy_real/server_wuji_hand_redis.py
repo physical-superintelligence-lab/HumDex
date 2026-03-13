@@ -272,14 +272,14 @@ class WujiHandRedisController:
         if self.use_model:
             # GeoRT model inference
             try:
-                import geort  # type: ignore
+                import training  # type: ignore
             except Exception as e:
                 raise ImportError(
-                    f"Failed to import geort (check wuji_policy and PYTHONPATH): {e}"
+                    f"Failed to import training (check wuji_policy and PYTHONPATH): {e}"
                 )
-            self._geort = geort
+            self._training = training
             print(f"[INFO] Loading GeoRT model: tag={self.model_tag}, epoch={self.model_epoch}")
-            self.model = geort.load_model(self.model_tag, epoch=self.model_epoch)
+            self.model = training.load_model(self.model_tag, epoch=self.model_epoch)
             try:
                 self.model.eval()
             except Exception:
@@ -715,7 +715,7 @@ Examples:
         "--policy_tag",
         type=str,
         default="geort_filter_wuji",
-        help="GeoRT model tag for geort.load_model(tag, epoch) (--use_model)",
+        help="Training model tag for training.load_model(tag, epoch) (--use_model)",
     )
     parser.add_argument(
         "--policy_epoch",

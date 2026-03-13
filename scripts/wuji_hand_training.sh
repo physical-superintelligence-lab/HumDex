@@ -1,20 +1,20 @@
 SCRIPT_DIR=$(dirname $(realpath $0))
-cd "${SCRIPT_DIR}/wuji_policy"
+cd "${SCRIPT_DIR}/../wuji_policy"
 
 # Runtime configuration
 human_data_name="wuji_right_example"   # data/<name>.npz
-hand_config="wuji_right"           # geort/config/<hand_config>.json
+hand_config="wuji_right"           # training/config/<hand_config>.json
 ckpt_tag="wuji_right_example"
 qpos_key="qpos"
 n_samples=20000
 batch_size=2048
 lr=1e-4
-epoch=500
+epoch=1
 save_every=10
-ckpt_root="${SCRIPT_DIR}/wuji_policy/checkpoint"
+ckpt_root="${SCRIPT_DIR}/../wuji_policy/checkpoint"
 
 # Start training
-python geort/trainer.py \
+python training/trainer.py \
     -hand ${hand_config} \
     -human_data ${human_data_name} \
     -ckpt_tag ${ckpt_tag} \
