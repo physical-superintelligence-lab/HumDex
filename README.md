@@ -1,5 +1,5 @@
 # HumDex: Humanoid Dexterous Manipulation Made Easy
-By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
+### By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
 
 <p align="center">
   <img src="./assets/demo.gif" alt="Banner for HumDex" width="90%">
@@ -9,6 +9,7 @@ By Liang Heng, Yihe Tang, Jiajun Xu, Henghui Bao, Di Huang, Yue Wang
   <a href="https://psi-lab.ai/humdex"><img src="https://img.shields.io/badge/project-page-brightgreen" alt="Project Page"></a>
   <a href="https://arxiv.org/abs/2603.12260"><img src="https://img.shields.io/badge/paper-arxiv-red" alt="Paper"></a>
   <a href="https://github.com/physical-superintelligence-lab/humdex/issues"><img src="https://img.shields.io/github/issues/physical-superintelligence-lab/humdex?color=yellow" alt="Issues"></a>
+  <a href="https://huggingface.co/heng222/humdex"><img src="https://img.shields.io/badge/model-HuggingFace-orange" alt="Hugging Face Model Card"></a>
 </p>
 
 ## Content Table
