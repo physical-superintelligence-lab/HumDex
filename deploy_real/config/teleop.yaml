@@ -8,23 +8,23 @@ network:
     ip: "localhost"                                              # Redis host for teleop publish/consume
   mocap:
     default:
-      ip: "192.168.0.139"                                        # Fallback mocap sender IP
+      ip: "192.168.31.223"                                        # Fallback mocap sender IP
       port: 7000                                                 # Fallback mocap sender UDP port
       index: 0                                                   # Fallback SDK stream index
       world_space: 0                                             # VDMocap world-space flag
       local_port: 0                                              # Local UDP port for SDK open
     body:
-      ip: "192.168.0.139"                                        # Body mocap sender IP
+      ip: "192.168.31.223"                                        # Body mocap sender IP
       port: 7000                                                 # Body mocap sender UDP port
       index: 0                                                   # Body SDK stream index
     hand:
-      ip: "192.168.0.139"                                        # Hand mocap sender IP
+      ip: "192.168.31.223"                                        # Hand mocap sender IP
       port: 7000                                                 # Hand mocap sender UDP port
-      index: 1                                                   # Hand SDK stream index
+      index: 0                                                   # Hand SDK stream index
 
 retarget:
   actual_human_height: 1.45                                      # Human height used for GMR retarget scaling
-  hands: "both"                                                  # Active hands: left/right/both/none
+  hands: "right"                                                 # Active hands: left/right/both/none
   format: "nokov"                                                # Source skeleton format for GMR
   offset_to_ground: true                                         # Apply ground-height offset in retarget
 
@@ -45,7 +45,7 @@ control:
 adapters:
   vdmocap: {}                                                    # VDMocap adapter section (currently no extra options)
   vdhand:
-    hand_fk: true                                                # Enable FK-based hand tracking reconstruction
+    hand_fk: false                                               # Enable FK-based hand tracking reconstruction
     hand_fk_end_site_scale: "0.858,0.882,0.882,0.882,0.882"      # End-site scale for thumb/index/middle/ring/little
   manus:
     address: "tcp://localhost:8000"                              # Manus bridge address

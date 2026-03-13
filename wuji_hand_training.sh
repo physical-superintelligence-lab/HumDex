@@ -2,15 +2,15 @@ SCRIPT_DIR=$(dirname $(realpath $0))
 cd "${SCRIPT_DIR}/wuji_policy"
 
 # Runtime configuration
-human_data_name="wuji_right_000"   # data/<name>.npz
+human_data_name="wuji_right_example"   # data/<name>.npz
 hand_config="wuji_right"           # geort/config/<hand_config>.json
-ckpt_tag="wuji_right_000"
+ckpt_tag="wuji_right_example"
 qpos_key="qpos"
 n_samples=20000
 batch_size=2048
 lr=1e-4
-epoch=300
-save_every=20
+epoch=500
+save_every=10
 ckpt_root="${SCRIPT_DIR}/wuji_policy/checkpoint"
 
 # Start training

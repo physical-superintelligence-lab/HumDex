@@ -28,7 +28,7 @@ By [Liang Heng](https://liangheng121.github.io/), [Yihe Tang](https://tangyihe.c
 
 ## Installation
 
-We will have two conda environments for Humdex. One is called `humdex`, which can be used for controller training, controller deployment, and teleop data collection. The other is called `gmr`, which can be used for online motion retargeting.
+We will have three conda environments for Humdex. The first is called `humdex`, which can be used for controller training, controller deployment, and teleop data collection. The second is called `gmr`, which can be used for online motion retargeting. The third is called `geort`, which can be used for wuji hand policy training.
 
 ### 1) Create `gmr` Environment
 
@@ -76,7 +76,20 @@ For the rest of `humdex` environment setup, follow TWIST2 README:
 - [Step 3: Install Packages](https://github.com/LiangHeng121/TWIST2?tab=readme-ov-file#step-3-install-packages)
 - [Step 4: Install Unitree SDK2 for Laptop Sim2Real](https://github.com/LiangHeng121/TWIST2?tab=readme-ov-file#step-4-install-unitree-sdk2-for-laptop-sim2real)
 
-### 3) Clone `GR00T-WholeBodyControl` (for sonic)
+### 3) Create `geort` Environment
+
+Use a dedicated environment for Wuji hand policy training:
+
+```bash
+conda create -n geort python=3.10 -y
+conda activate geort
+
+cd wuji_policy
+pip install -r requirements.txt
+pip install -e .
+```
+
+### 4) Clone `GR00T-WholeBodyControl` (for sonic)
 
 ```bash
 cd ..
@@ -294,6 +307,18 @@ bash scripts/data_record_human.sh
 
 # sonic channel
 bash scripts/data_record_human.sh --channel sonic
+
+# just collect hand data (no RealSense)
+bash scripts/data_record_human.sh --use_realsense 0
+```
+
+### 4) Build Wuji Hand Policy Training NPZ
+
+If you want to obtain hand training data, you need to run this conversion step.
+
+```bash
+# edit variables in build_wuji_hand_policy_data.sh first, then run:
+bash build_wuji_hand_policy_data.sh
 ```
 
 ---
@@ -367,7 +392,21 @@ python imitate_episodes.py \
 
 Checkpoint location: `<ckpt_root>/<task_name>/<timestamp>/`
 
-### 3) Policy Inference
+### 3) Wuji Hand Retarget Model Training
+
+```bash
+cd ..
+# default: wuji_policy/data/wuji_right_000.npz -> checkpoint tag wuji_right_000
+bash wuji_hand_training.sh
+```
+
+Edit top variables in `wuji_hand_training.sh` to switch dataset/tag/hyperparameters:
+- `human_data_name`
+- `hand_config` (`wuji_right` / `wuji_left`)
+- `ckpt_tag`
+- `epoch`, `n_samples`, `batch_size`, `lr`, `save_every`
+
+### 4) Policy Inference
 
 **a) Offline evaluation (policy + dataset observations):**
 
