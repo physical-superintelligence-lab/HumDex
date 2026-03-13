@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# # Local media assets (keep out of git history)
+# public/videos/*.mp4
+# !public/videos/.gitkeep
+# !public/videos/demo.mp4
+# !public/videos/*.hq2.mp4
+# !public/videos/人类数据采集-*.mp4
+# !public/videos/抓面包-推理-位置泛化*.mp4
+# !public/videos/抓面包-推理-物品泛化*.mp4
+# !public/videos/抓面包-推理-背景泛化*.mp4

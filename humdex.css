@@ -1,0 +1,281 @@
+.humdex-page {
+  --bg: #070b14;
+  --panel: #101a31;
+  --text: #e7eefc;
+  --muted: #9fb0d0;
+  --brand: #62a1ff;
+  --border: #22314f;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #11203f 0%, var(--bg) 45%);
+  color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.humdex-page * {
+  box-sizing: border-box;
+}
+
+.humdex-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.humdex-page .container {
+  width: min(1120px, 92vw);
+  margin: 0 auto;
+}
+
+.humdex-page .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 11, 20, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.humdex-page .topbar-inner {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.humdex-page .brand {
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.humdex-page .nav {
+  display: flex;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.humdex-page .nav a:hover {
+  color: var(--text);
+}
+
+.humdex-page .hero {
+  padding: 92px 0 72px;
+}
+
+.humdex-page .hero-inner {
+  text-align: center;
+}
+
+.humdex-page h1 {
+  font-size: clamp(34px, 5vw, 60px);
+  line-height: 1.08;
+  margin: 16px 0 14px;
+  letter-spacing: -0.02em;
+}
+
+.humdex-page .subtitle {
+  max-width: 780px;
+  margin: 0 auto;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.humdex-page .hero-actions {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.humdex-page .btn {
+  border: 1px solid var(--border);
+  background: #101a31;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.humdex-page .btn:hover {
+  border-color: #3f5f99;
+}
+
+.humdex-page .btn-primary {
+  background: linear-gradient(135deg, var(--brand), #5283ff);
+  border-color: transparent;
+  color: #fff;
+}
+
+.humdex-page .meta {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  color: #90a4cb;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.humdex-page .section {
+  padding: 72px 0;
+}
+
+.humdex-page .section.alt {
+  background: linear-gradient(0deg, rgba(16, 26, 49, 0.2), rgba(16, 26, 49, 0.2));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.humdex-page h2 {
+  margin: 0 0 14px;
+  font-size: clamp(24px, 3vw, 36px);
+}
+
+.humdex-page .section p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.85;
+}
+
+.humdex-page .cards {
+  margin-top: 22px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.humdex-page .card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.humdex-page .card h3 {
+  margin: 0 0 10px;
+}
+
+.humdex-page .video-stack {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.humdex-page .video-card {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  position: relative;
+}
+
+.humdex-page .video-card.large {
+  padding: 14px;
+}
+
+.humdex-page .demo-video {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #000;
+  display: block;
+}
+
+.humdex-page .video-card figcaption {
+  margin-top: 10px;
+  color: #a9bbdc;
+  font-size: 14px;
+}
+
+.humdex-page .result-figure {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: 0;
+  text-align: center;
+  overflow: hidden;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.humdex-page .fig-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.humdex-page .result-figure img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0;
+  display: block;
+  margin: 0;
+}
+
+.humdex-page .result-figure figcaption {
+  margin: 0;
+  padding: 10px 12px 12px;
+  color: #a9bbdc;
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: left;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.humdex-page .bibtex {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #0b1428;
+  color: #d6e4ff;
+}
+
+.humdex-page .footer {
+  border-top: 1px solid #dbe3f0;
+  background: #ffffff;
+  padding: 24px 0;
+}
+
+.humdex-page .footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.humdex-page .footer p {
+  margin: 0;
+  color: #2f3e5f;
+  font-size: 14px;
+}
+
+.humdex-page .theme-toggle {
+  border: 1px solid #d1dcee;
+  background: #f4f7ff;
+  color: #0f1d35;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.humdex-page.light {
+  --bg: #f4f7ff;
+  --panel: #ffffff;
+  --text: #0f1d35;
+  --muted: #465c84;
+  --brand: #236aff;
+  --border: #d7e0f0;
+  background: #f6f9ff;
+}
+
+@media (max-width: 960px) {
+  .humdex-page .cards {
+    grid-template-columns: 1fr;
+  }
+}
